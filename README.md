@@ -111,10 +111,8 @@ npm start
 
 ## 👨‍💻 Developer
 
-**Aysha Afnan Moideen - III BCA**
+**Aysha Afnan Moideen**
 
----
+Founder & Developer of SmartSeat | III BCA
 
-## 📄 License
-
-MIT License
+GitHub: https://github.com/AyshaMoideen
