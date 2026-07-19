@@ -1,0 +1,261 @@
+/* ==========================================
+   SMARTSEAT SETTINGS
+========================================== */
+
+*{
+
+    margin:0;
+
+    padding:0;
+
+    box-sizing:border-box;
+
+    font-family:'Poppins',sans-serif;
+
+}
+
+body{
+
+    background:#f4f7fc;
+
+}
+
+.main{
+
+    margin-left:260px;
+
+    padding:30px;
+
+}
+
+.settings-container{
+
+    max-width:1200px;
+
+    margin:auto;
+
+}
+
+.header-section{
+
+    margin-bottom:25px;
+
+}
+
+.header-section h2{
+
+    font-family:'Montserrat',sans-serif;
+
+    font-weight:800;
+
+    color:#0B2D5C;
+
+}
+
+.header-section p{
+
+    color:#666;
+
+    margin-top:5px;
+
+}
+
+/* ==========================
+   Cards
+========================== */
+
+.card{
+
+    border:none;
+
+    border-radius:16px;
+
+    overflow:hidden;
+
+    box-shadow:0 8px 25px rgba(0,0,0,.08);
+
+}
+
+.card-header{
+
+    background:#0B2D5C;
+
+    color:white;
+
+    border:none;
+
+    padding:16px 20px;
+
+}
+
+.card-header h5{
+
+    margin:0;
+
+    font-weight:600;
+
+}
+
+.card-body{
+
+    padding:25px;
+
+}
+
+/* ==========================
+   Form
+========================== */
+
+.form-label{
+
+    font-weight:600;
+
+    color:#444;
+
+}
+
+.form-control{
+
+    border-radius:10px;
+
+    padding:12px;
+
+    border:1px solid #ddd;
+
+}
+
+.form-control:focus{
+
+    border-color:#0B2D5C;
+
+    box-shadow:0 0 0 .15rem rgba(11,45,92,.15);
+
+}
+
+/* ==========================
+   Buttons
+========================== */
+
+.btn{
+
+    border-radius:10px;
+
+    padding:10px 22px;
+
+    font-weight:600;
+
+    transition:.3s;
+
+}
+
+.btn-primary{
+
+    background:#0B2D5C;
+
+    border:none;
+
+}
+
+.btn-primary:hover{
+
+    background:#123f7d;
+
+}
+
+.btn-success:hover{
+
+    transform:translateY(-2px);
+
+}
+
+.btn-warning:hover{
+
+    transform:translateY(-2px);
+
+}
+
+.btn-danger:hover{
+
+    transform:translateY(-2px);
+
+}
+
+/* ==========================
+   Switch
+========================== */
+
+.form-check{
+
+    padding:15px 0;
+
+}
+
+.form-check-input{
+
+    width:50px;
+
+    height:25px;
+
+}
+
+/* ==========================
+   About
+========================== */
+
+.card-body p{
+
+    margin-bottom:12px;
+
+}
+
+.card-body strong{
+
+    color:#0B2D5C;
+
+}
+
+/* ==========================
+   Animation
+========================== */
+
+.card{
+
+    animation:fadeIn .5s ease;
+
+}
+
+@keyframes fadeIn{
+
+    from{
+
+        opacity:0;
+
+        transform:translateY(15px);
+
+    }
+
+    to{
+
+        opacity:1;
+
+        transform:translateY(0);
+
+    }
+
+}
+
+/* ==========================
+   Responsive
+========================== */
+
+@media(max-width:992px){
+
+.main{
+
+    margin-left:0;
+
+    padding:20px;
+
+}
+
+}

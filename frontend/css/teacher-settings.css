@@ -1,0 +1,132 @@
+/* ==========================================
+   SmartSeat - Account Settings
+   Uses shared layout.css
+========================================== */
+
+.page-header{
+    margin-bottom:30px;
+}
+
+.page-header h2{
+    font-size:2.3rem;
+    font-weight:700;
+    color:#17366f;
+    margin-bottom:8px;
+}
+
+.page-header p{
+    color:#6c757d;
+    font-size:16px;
+}
+
+/* ===========================
+   Settings Card
+=========================== */
+
+.settings-card{
+    background:#fff;
+    border-radius:18px;
+    padding:30px;
+    box-shadow:0 8px 25px rgba(0,0,0,.08);
+    margin-bottom:30px;
+}
+
+.settings-card h3{
+    color:#17366f;
+    font-size:28px;
+    font-weight:700;
+    margin-bottom:25px;
+    padding-bottom:15px;
+    border-bottom:1px solid #e9ecef;
+}
+
+/* ===========================
+   Form
+=========================== */
+
+.form-label{
+    font-weight:600;
+    color:#495057;
+    margin-bottom:8px;
+}
+
+.form-control,
+.form-select{
+    height:52px;
+    border-radius:10px;
+    border:1px solid #dce1e7;
+    font-size:15px;
+    transition:.3s;
+}
+
+textarea.form-control{
+    min-height:110px;
+    resize:none;
+}
+
+.form-control:focus,
+.form-select:focus{
+    border-color:#2563eb;
+    box-shadow:0 0 0 .2rem rgba(37,99,235,.15);
+}
+
+/* ===========================
+   Section Divider
+=========================== */
+
+.section-title{
+    margin:35px 0 20px;
+    font-size:22px;
+    font-weight:700;
+    color:#17366f;
+}
+
+/* ===========================
+   Buttons
+=========================== */
+
+.action-buttons{
+    display:flex;
+    justify-content:flex-end;
+    gap:12px;
+    margin-top:30px;
+}
+
+.btn{
+    border-radius:10px;
+    padding:10px 22px;
+    font-weight:600;
+}
+
+.btn-primary{
+    background:#2563eb;
+    border:none;
+}
+
+.btn-primary:hover{
+    background:#1d4ed8;
+}
+
+.btn-outline-secondary{
+    border-radius:10px;
+}
+
+/* ===========================
+   Responsive
+=========================== */
+
+@media (max-width:768px){
+
+    .settings-card{
+        padding:20px;
+    }
+
+    .action-buttons{
+        flex-direction:column;
+    }
+
+    .action-buttons .btn{
+        width:100%;
+    }
+
+}

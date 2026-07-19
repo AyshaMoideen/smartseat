@@ -1,0 +1,464 @@
+/* ===========================================
+   SMARTSEAT DASHBOARD
+=========================================== */
+
+:root{
+
+    --primary:#0B2D5C;
+    --secondary:#1D8EF7;
+    --success:#16C47F;
+    --warning:#FFC107;
+    --danger:#EF4444;
+    --light:#F5F7FB;
+    --white:#FFFFFF;
+    --dark:#1E293B;
+    --gray:#64748B;
+
+    --radius:18px;
+    --shadow:0 12px 35px rgba(0,0,0,.08);
+
+}
+
+*{
+
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+
+}
+
+body{
+
+    font-family:'Poppins',sans-serif;
+    background:var(--light);
+    overflow-x:hidden;
+
+}
+
+/* ==========================
+SIDEBAR
+========================== */
+
+.sidebar{
+
+    width:270px;
+    height:100vh;
+    background:linear-gradient(180deg,#0B2D5C,#18498B);
+
+    position:fixed;
+    left:0;
+    top:0;
+
+    color:white;
+
+    padding:25px;
+
+    box-shadow:0 15px 40px rgba(0,0,0,.15);
+
+}
+
+.logo-section{
+
+    text-align:center;
+    margin-bottom:40px;
+
+}
+
+.logo-section img{
+
+    width:90px;
+    margin-bottom:15px;
+
+}
+
+.logo-section h3{
+
+    font-family:'Montserrat',sans-serif;
+    font-weight:800;
+    margin-bottom:5px;
+
+}
+
+.logo-section p{
+
+    opacity:.8;
+
+}
+
+/* ==========================
+MENU
+========================== */
+
+.sidebar ul{
+
+    list-style:none;
+    padding-left:0;
+
+}
+
+.sidebar ul li{
+
+    padding:16px 18px;
+    margin-bottom:12px;
+
+    border-radius:14px;
+
+    cursor:pointer;
+
+    display:flex;
+    align-items:center;
+    gap:15px;
+
+    transition:.35s;
+
+    font-weight:500;
+
+}
+
+.sidebar ul li i{
+
+    font-size:20px;
+
+}
+
+.sidebar ul li:hover{
+
+    background:rgba(255,255,255,.12);
+
+    transform:translateX(6px);
+
+}
+
+.sidebar ul li.active{
+
+    background:#1D8EF7;
+
+}
+
+/* ==========================
+MAIN
+========================== */
+
+.main{
+
+    margin-left:270px;
+
+    padding:35px;
+
+}
+
+/* ==========================
+TOPBAR
+========================== */
+
+.topbar{
+
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+
+    margin-bottom:35px;
+
+}
+
+.topbar h2{
+
+    color:var(--primary);
+    font-weight:700;
+    margin-bottom:8px;
+
+}
+
+.topbar p{
+
+    color:var(--gray);
+
+}
+
+.profile img{
+
+    width:58px;
+    height:58px;
+
+    border-radius:50%;
+
+    border:3px solid white;
+
+    box-shadow:var(--shadow);
+
+}
+
+/* ==========================
+STATISTICS CARDS
+========================== */
+
+.cards{
+
+    display:grid;
+
+    grid-template-columns:
+    repeat(auto-fit,minmax(220px,1fr));
+
+    gap:25px;
+
+}
+
+.card-box{
+
+    background:white;
+
+    border-radius:20px;
+
+    padding:30px;
+
+    box-shadow:var(--shadow);
+
+    transition:.35s;
+
+    position:relative;
+
+    overflow:hidden;
+
+}
+
+.card-box::before{
+
+    content:"";
+
+    position:absolute;
+
+    width:140px;
+    height:140px;
+
+    background:#dcecff;
+
+    border-radius:50%;
+
+    top:-70px;
+    right:-70px;
+
+}
+
+.card-box:hover{
+
+    transform:translateY(-10px);
+
+}
+
+.card-box i{
+
+    font-size:45px;
+
+    color:var(--secondary);
+
+    margin-bottom:18px;
+
+}
+
+.card-box h1{
+
+    font-size:42px;
+
+    color:var(--primary);
+
+    font-weight:700;
+
+}
+
+.card-box p{
+
+    color:var(--gray);
+
+    margin-top:8px;
+
+}
+
+/* ==========================
+QUICK ACTIONS
+========================== */
+
+.quick-actions{
+
+    margin-top:45px;
+
+    background:white;
+
+    padding:30px;
+
+    border-radius:20px;
+
+    box-shadow:var(--shadow);
+
+}
+
+.quick-actions h3{
+
+    color:var(--primary);
+
+    font-weight:700;
+
+    margin-bottom:25px;
+
+}
+
+.action-grid{
+
+    display:grid;
+
+    grid-template-columns:
+    repeat(auto-fit,minmax(180px,1fr));
+
+    gap:18px;
+
+}
+
+.action-grid button{
+
+    border:none;
+
+    background:#1D8EF7;
+
+    color:white;
+
+    padding:16px;
+
+    border-radius:14px;
+
+    font-weight:600;
+
+    transition:.3s;
+
+}
+
+.action-grid button:hover{
+
+    background:#0B2D5C;
+
+    transform:translateY(-4px);
+
+}
+.dashboard-card{
+
+    background:#fff;
+
+    border-radius:20px;
+
+    padding:25px;
+
+    box-shadow:0 10px 25px rgba(0,0,0,.08);
+
+    margin-bottom:25px;
+
+}
+
+.dashboard-card h5{
+
+    color:#0B2D5C;
+
+    font-weight:700;
+
+    margin-bottom:20px;
+
+}
+
+/* ==========================
+   Recent Activity
+========================== */
+
+.recent{
+
+    margin-top:35px;
+
+    background:#fff;
+
+    border-radius:22px;
+
+    padding:30px;
+
+    box-shadow:var(--shadow);
+
+}
+
+.recent h3{
+
+    color:var(--primary);
+
+    font-weight:700;
+
+    margin-bottom:20px;
+
+}
+
+.table{
+
+    margin-bottom:0;
+
+}
+
+.table thead th{
+
+    color:#0B2D5C;
+
+    font-weight:700;
+
+    border:none;
+
+}
+
+.table tbody td{
+
+    padding:18px;
+
+}
+
+/* ==========================
+   Cards Hover
+========================== */
+
+.dashboard-card:hover,
+.quick-actions:hover,
+.recent:hover{
+
+    transform:translateY(-4px);
+
+    transition:.3s;
+
+}
+
+/* ==========================
+   Responsive
+========================== */
+
+@media(max-width:992px){
+
+    .main{
+
+        margin-left:0;
+
+        padding:20px;
+
+    }
+
+    .cards{
+
+        grid-template-columns:repeat(2,1fr);
+
+    }
+
+}
+
+@media(max-width:768px){
+
+    .cards{
+
+        grid-template-columns:1fr;
+
+    }
+
+    .action-grid{
+
+        grid-template-columns:1fr;
+
+    }
+
+}

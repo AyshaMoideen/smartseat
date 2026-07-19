@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Student Management | SmartSeat</title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+<link rel="stylesheet" href="../assets/css/manage-students.css">
+
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="container-fluid">
+
+<div class="row">
+
+<!-- Sidebar -->
+
+<div class="col-lg-2 sidebar">
+
+<h2>SMARTSEAT</h2>
+
+<ul>
+
+<li class="active">
+
+<i class="bi bi-people-fill"></i>
+
+Students
+
+</li>
+
+<li>
+
+<i class="bi bi-building"></i>
+
+Rooms
+
+</li>
+
+<li>
+
+<i class="bi bi-grid"></i>
+
+Generate Seating
+
+</li>
+
+<li>
+
+<i class="bi bi-file-earmark-pdf"></i>
+
+Reports
+
+</li>
+
+</ul>
+
+</div>
+
+<!-- Main -->
+
+<div class="col-lg-10 main">
+
+<h1>
+
+Student Management
+
+</h1>
+
+<p>
+
+Upload Excel or Add Departments Manually
+
+</p>
+
+<div class="top-buttons">
+
+<button class="btn btn-primary">
+
+<i class="bi bi-upload"></i>
+
+Upload Excel
+
+</button>
+
+<button class="btn btn-success">
+
+<i class="bi bi-plus-circle"></i>
+
+Manual Entry
+
+</button>
+
+</div>
+
+<!-- Manual Entry -->
+
+<div class="card mt-4">
+
+<div class="card-header">
+
+Manual Department Entry
+
+</div>
+
+<div class="card-body">
+
+<form id="studentForm">
+
+<div class="row">
+
+<div class="col-md-4">
+
+<label>
+
+Department
+
+</label>
+
+<input
+type="text"
+id="department"
+class="form-control">
+
+</div>
+
+<div class="col-md-3">
+
+<label>
+
+Student Count
+
+</label>
+
+<input
+type="number"
+id="count"
+class="form-control">
+
+</div>
+
+<div class="col-md-3">
+
+<label>
+
+Register Prefix
+
+</label>
+
+<input
+type="text"
+id="prefix"
+class="form-control">
+
+</div>
+
+<div class="col-md-2 d-grid">
+
+<label>&nbsp;</label>
+
+<button
+class="btn btn-primary">
+
+Add
+
+</button>
+
+</div>
+
+</div>
+
+</form>
+
+</div>
+
+</div>
+
+<!-- Table -->
+
+<div class="card mt-4">
+
+<div class="card-header">
+
+Departments Added
+
+</div>
+
+<div class="card-body">
+
+<table class="table table-striped">
+
+<thead>
+
+<tr>
+
+<th>Department</th>
+
+<th>Students</th>
+
+<th>Prefix</th>
+
+<th>Actions</th>
+
+</tr>
+
+</thead>
+
+<tbody id="studentTable">
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<script src="../assets/js/manage-students.js"></script>
+
+</body>
+
+</html>

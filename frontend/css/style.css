@@ -1,0 +1,858 @@
+/* ===========================================
+   SMARTSEAT
+   Examination Seating Management System
+   Malik Deenar College of Graduate Studies
+=========================================== */
+
+:root{
+
+    --primary:#0B2D5C;
+    --secondary:#1D8EF7;
+    --success:#16C47F;
+    --light:#F5F7FB;
+    --white:#ffffff;
+    --dark:#10233e;
+    --gray:#6b7280;
+
+    --shadow:0 12px 35px rgba(0,0,0,.08);
+    --radius:18px;
+
+}
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+html{
+
+    scroll-behavior:smooth;
+
+}
+
+body{
+
+    font-family:'Poppins',sans-serif;
+    background:var(--light);
+    color:#222;
+    overflow-x:hidden;
+
+}
+
+/*==========================
+NAVBAR
+===========================*/
+
+.custom-navbar{
+
+    background:rgba(255,255,255,.92);
+
+    backdrop-filter:blur(18px);
+
+    box-shadow:var(--shadow);
+
+    padding:14px 0;
+
+    transition:.35s;
+
+}
+
+.logo{
+
+    width:62px;
+    height:62px;
+    object-fit:contain;
+
+}
+
+.college-name{
+
+    font-family:'Montserrat',sans-serif;
+
+    color:var(--primary);
+
+    font-weight:800;
+
+    font-size:18px;
+
+}
+
+.college-sub{
+
+    color:var(--gray);
+
+    font-size:13px;
+
+}
+
+.navbar-nav{
+
+    gap:12px;
+
+}
+
+.nav-link{
+
+    color:var(--primary)!important;
+
+    font-weight:600;
+
+    border-radius:12px;
+
+    padding:10px 18px!important;
+
+    transition:.35s;
+
+}
+
+.nav-link:hover{
+
+    background:var(--secondary);
+
+    color:#fff!important;
+
+}
+
+/*==========================
+HERO
+===========================*/
+
+.hero{
+
+    min-height:85vh;
+
+    display:flex;
+
+    align-items:center;
+
+    position:relative;
+
+    padding-top:110px;
+
+    overflow:hidden;
+
+}
+
+/* background blobs */
+
+.hero::before{
+
+    content:"";
+
+    position:absolute;
+
+    width:420px;
+
+    height:420px;
+
+    border-radius:50%;
+
+    background:#cfe5ff;
+
+    top:-150px;
+
+    right:-100px;
+
+    filter:blur(25px);
+
+    z-index:-2;
+
+}
+
+.hero::after{
+
+    content:"";
+
+    position:absolute;
+
+    width:350px;
+
+    height:350px;
+
+    border-radius:50%;
+
+    background:#b4f5d8;
+
+    bottom:-120px;
+
+    left:-80px;
+
+    filter:blur(20px);
+
+    z-index:-2;
+
+}
+
+.software-badge{
+
+    background:#e8f1ff;
+
+    color:var(--secondary);
+
+    font-size:15px;
+
+    padding:10px 20px;
+
+    border-radius:30px;
+
+    margin-bottom:22px;
+
+}
+
+.hero-title{
+
+    font-family:'Montserrat',sans-serif;
+
+    font-size:64px;
+
+    font-weight:800;
+
+    color:var(--primary);
+
+    line-height:1.1;
+
+    margin-bottom:25px;
+
+}
+
+.hero-text{
+
+    font-size:19px;
+
+    line-height:1.8;
+
+    color:#555;
+
+    max-width:640px;
+
+}
+
+/*==========================
+BUTTONS
+===========================*/
+
+.hero-buttons{
+
+    margin-top:40px;
+
+    display:flex;
+
+    gap:20px;
+
+    flex-wrap:wrap;
+
+}
+
+.btn-primary{
+
+    background:var(--secondary);
+
+    border:none;
+
+    padding:15px 30px;
+
+    border-radius:15px;
+
+    font-weight:600;
+
+    transition:.35s;
+
+}
+
+.btn-primary:hover{
+
+    background:var(--primary);
+
+    transform:translateY(-5px);
+
+}
+
+.btn-outline-primary{
+
+    border:2px solid var(--secondary);
+
+    color:var(--secondary);
+
+    padding:15px 30px;
+
+    border-radius:15px;
+
+    font-weight:600;
+
+}
+
+.btn-outline-primary:hover{
+
+    background:var(--secondary);
+
+    color:#fff;
+
+}
+
+/*==========================
+Dashboard Preview
+===========================*/
+
+.dashboard-preview{
+
+    background:rgba(255,255,255,.90);
+    backdrop-filter:blur(18px);
+    border-radius:22px;
+    padding:20px;
+    box-shadow:var(--shadow);
+    animation:float 5s ease-in-out infinite;
+
+}
+
+.preview-header{
+
+    margin-bottom:18px;
+
+}
+
+.dashboard-title{
+
+    font-family:'Montserrat',sans-serif;
+    font-size:28px;
+    font-weight:800;
+    color:var(--primary);
+    margin-bottom:8px;
+
+}
+
+.status{
+
+    display:flex;
+    align-items:center;
+    gap:8px;
+
+    color:#16a34a;
+    font-size:14px;
+    font-weight:600;
+
+}
+
+.status-dot{
+
+    width:10px;
+    height:10px;
+    border-radius:50%;
+    background:#22c55e;
+
+    animation:pulse 1.5s infinite;
+
+}
+
+.preview-body{
+
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:12px;
+
+}
+
+.preview-card{
+
+    background:#fff;
+
+    border-radius:16px;
+
+    padding:16px;
+
+    text-align:center;
+
+    box-shadow:0 8px 20px rgba(0,0,0,.06);
+
+    transition:.3s;
+
+}
+
+.preview-card:hover{
+
+    transform:translateY(-4px);
+
+}
+
+.preview-card i{
+
+    font-size:26px;
+
+    color:var(--secondary);
+
+    margin-bottom:8px;
+
+}
+
+
+.preview-card p{
+
+    margin:0;
+
+    font-size:14px;
+
+    font-weight:600;
+
+    color:var(--gray);
+
+}
+
+.dashboard-footer{
+
+    margin-top:15px;
+
+    padding-top:12px;
+
+    border-top:1px solid #eee;
+
+    text-align:center;
+
+    font-size:13px;
+
+    color:#6b7280;
+
+}
+/*==========================
+Floating Animation
+===========================*/
+
+@keyframes float{
+
+0%{
+
+transform:translateY(0px);
+
+}
+
+50%{
+
+transform:translateY(-12px);
+
+}
+
+100%{
+
+transform:translateY(0px);
+
+}
+
+}
+/*======================================
+FEATURES SECTION
+======================================*/
+
+.features{
+
+    padding:100px 0;
+    background:#ffffff;
+
+}
+
+.section-title{
+
+    text-align:center;
+    margin-bottom:60px;
+
+}
+
+.section-title h2{
+
+    font-family:'Montserrat',sans-serif;
+    font-size:42px;
+    font-weight:800;
+    color:var(--primary);
+    margin-bottom:15px;
+
+}
+
+.section-title p{
+
+    max-width:700px;
+    margin:auto;
+    color:var(--gray);
+    font-size:18px;
+    line-height:1.8;
+
+}
+
+.feature-card{
+
+    background:#fff;
+    border-radius:22px;
+    padding:35px;
+    text-align:center;
+    box-shadow:var(--shadow);
+    transition:.35s;
+    height:100%;
+
+}
+
+.feature-card:hover{
+
+    transform:translateY(-10px);
+    box-shadow:0 20px 45px rgba(0,0,0,.12);
+
+}
+
+.feature-card i{
+
+    font-size:52px;
+    color:var(--secondary);
+    margin-bottom:20px;
+
+}
+
+.feature-card h4{
+
+    font-weight:700;
+    color:var(--primary);
+    margin-bottom:15px;
+
+}
+
+.feature-card p{
+
+    color:var(--gray);
+    line-height:1.8;
+
+}
+
+/*======================================
+ABOUT SECTION
+======================================*/
+
+.about{
+
+    padding:100px 0;
+    background:var(--light);
+
+}
+
+.about-logo{
+
+    width:300px;
+    display:block;
+    margin:auto;
+    filter:drop-shadow(0 10px 25px rgba(0,0,0,.15));
+
+}
+
+.about h2{
+
+    font-family:'Montserrat',sans-serif;
+    font-size:40px;
+    color:var(--primary);
+    margin-bottom:25px;
+
+}
+
+.about p{
+
+    font-size:18px;
+    line-height:1.9;
+    color:#555;
+    margin-bottom:20px;
+
+}
+
+/*======================================
+FOOTER
+======================================*/
+
+footer{
+
+    background:var(--primary);
+    color:#fff;
+    padding:60px 0;
+
+}
+
+.footer-logo{
+
+    width:80px;
+    margin-bottom:20px;
+
+}
+
+footer h5{
+
+    font-weight:700;
+    margin-bottom:15px;
+
+}
+
+footer p{
+
+    color:#dbeafe;
+    margin-bottom:8px;
+
+}
+
+/*======================================
+CUSTOM SCROLLBAR
+======================================*/
+
+::-webkit-scrollbar{
+
+    width:10px;
+
+}
+
+::-webkit-scrollbar-track{
+
+    background:#edf2f7;
+
+}
+
+::-webkit-scrollbar-thumb{
+
+    background:var(--secondary);
+    border-radius:20px;
+
+}
+
+::-webkit-scrollbar-thumb:hover{
+
+    background:var(--primary);
+
+}
+
+/*======================================
+SMOOTH FADE
+======================================*/
+
+.fade-up{
+
+    animation:fadeUp .8s ease forwards;
+
+}
+
+@keyframes fadeUp{
+
+    from{
+
+        opacity:0;
+        transform:translateY(40px);
+
+    }
+
+    to{
+
+        opacity:1;
+        transform:translateY(0);
+
+    }
+
+}
+
+/*======================================
+RESPONSIVE
+======================================*/
+
+@media(max-width:1200px){
+
+.hero-title{
+
+    font-size:52px;
+
+}
+
+}
+
+@media(max-width:992px){
+
+.hero{
+
+    text-align:center;
+
+}
+
+.hero-title{
+
+    font-size:46px;
+
+}
+
+.hero-text{
+
+    margin:auto;
+
+}
+
+.hero-buttons{
+
+    justify-content:center;
+
+}
+
+.dashboard-preview{
+
+    margin-top:60px;
+
+}
+
+.about{
+
+    text-align:center;
+
+}
+
+.about-logo{
+
+    margin-bottom:40px;
+
+}
+
+}
+
+@media(max-width:768px){
+
+.logo{
+
+    width:52px;
+    height:52px;
+
+}
+
+.college-name{
+
+    font-size:15px;
+
+}
+
+.college-sub{
+
+    display:none;
+
+}
+
+.hero{
+
+    padding-top:130px;
+
+}
+
+.hero-title{
+
+    font-size:38px;
+
+}
+
+.hero-text{
+
+    font-size:16px;
+
+}
+
+.preview-body{
+
+    grid-template-columns:1fr;
+
+}
+
+.section-title h2{
+
+    font-size:34px;
+
+}
+
+.feature-card{
+
+    padding:28px;
+
+}
+
+.about h2{
+
+    font-size:34px;
+
+}
+
+.about-logo{
+
+    width:220px;
+
+}
+
+}
+
+@media(max-width:576px){
+
+.hero-title{
+
+    font-size:32px;
+
+}
+
+.btn-primary,
+.btn-outline-primary{
+
+    width:100%;
+
+}
+
+.dashboard-preview{
+
+    padding:20px;
+
+}
+
+.preview-card{
+
+    padding:20px;
+
+}
+
+}
+
+.preview-card h2{
+
+font-size:42px;
+
+font-weight:700;
+
+color:#163A70;
+
+margin-top:15px;
+
+margin-bottom:10px;
+
+}
+
+.preview-header{
+
+    padding:30px;
+
+}
+
+.status{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:10px;
+
+    margin-top:12px;
+
+    color:#16a34a;
+
+    font-weight:600;
+
+    font-size:15px;
+
+}
+
+.status-dot{
+
+    width:12px;
+
+    height:12px;
+
+    border-radius:50%;
+
+    background:#22c55e;
+
+    animation:pulse 1.5s infinite;
+
+}

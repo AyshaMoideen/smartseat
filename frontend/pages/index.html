@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>SmartSeat | Examination Seating Management System</title>
+
+    <meta name="description"
+        content="SmartSeat - Examination Seating Management System for Malik Deenar College of Graduate Studies">
+
+    <!-- Bootstrap CSS -->
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+
+    <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <!-- Google Fonts -->
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800&family=Poppins:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
+
+    <!-- Custom CSS -->
+
+    <link rel="stylesheet" href="../css/style.css">
+
+</head>
+
+<body>
+
+    <!-- ================= NAVBAR ================= -->
+
+    <nav class="navbar navbar-expand-lg navbar-light fixed-top custom-navbar">
+
+        <div class="container">
+
+            <a class="navbar-brand d-flex align-items-center" href="#">
+
+                <img src="../assets/images/college-logo.png" alt="MDCGS Logo" class="logo">
+
+                <div class="ms-3">
+
+                    <h6 class="college-name mb-0">
+                        Malik Deenar College
+                    </h6>
+
+                    <small class="college-sub">
+                        Examination Seating Management System
+                    </small>
+
+                </div>
+
+            </a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                data-bs-target="#navbarNav">
+
+                <span class="navbar-toggler-icon"></span>
+
+            </button>
+
+            <div class="collapse navbar-collapse justify-content-end"
+                id="navbarNav">
+
+                <ul class="navbar-nav">
+
+                    <li class="nav-item">
+
+                        <a class="nav-link active" href="#">
+                            Home
+                        </a>
+
+                    </li>
+
+                    <li class="nav-item">
+
+                        <a class="nav-link"
+                            href="teacher-login.html">
+                            Teacher Login
+                        </a>
+
+                    </li>
+
+                    <li class="nav-item">
+
+                        <a class="nav-link"
+                            href="find-seat.html">
+                            Find My Seat
+                        </a>
+
+                    </li>
+
+                    <li class="nav-item">
+
+                        <a class="nav-link"
+                            href="#features">
+                            Features
+                        </a>
+
+                    </li>
+
+                    <li class="nav-item">
+
+                        <a class="nav-link"
+                            href="#about">
+                            About
+                        </a>
+
+                    </li>
+
+                </ul>
+
+            </div>
+
+        </div>
+
+    </nav>
+
+    <!-- ================= HERO ================= -->
+
+    <section class="hero">
+
+        <div class="container">
+
+            <div class="row align-items-center">
+
+                <div class="col-lg-6">
+
+                    <span class="badge software-badge">
+
+                        SmartSeat v1.0
+
+                    </span>
+
+                    <h1 class="hero-title">
+
+                        Smart Examination
+                        <br>
+
+                        Seating Management
+                        <br>
+
+                        System
+
+                    </h1>
+
+                    <p class="hero-text">
+
+                        Automate examination seating arrangements,
+                        manage classrooms, generate professional seating
+                        reports and help students instantly locate their
+                        examination hall.
+
+                    </p>
+
+                    <div class="hero-buttons">
+
+                        <a href="teacher-login.html"
+                            class="btn btn-primary btn-lg">
+
+                            <i class="bi bi-person-workspace"></i>
+
+                            Teacher Login
+
+                        </a>
+
+                        <a href="find-seat.html"
+                            class="btn btn-outline-primary btn-lg">
+
+                            <i class="bi bi-search"></i>
+
+                            Find My Seat
+
+                        </a>
+
+                    </div>
+
+                </div>
+
+                <div class="col-lg-6">
+                   
+                    <div class="dashboard-preview">
+
+    <div class="preview-header">
+
+    <h3 class="dashboard-title">
+
+        Live SmartSeat Statistics
+
+    </h3>
+
+    <div class="status">
+
+        <span class="status-dot"></span>
+
+        <span>System Online</span>
+
+    </div>
+
+</div>
+
+    </div>
+
+    <div class="preview-body">
+
+        <div class="preview-card">
+
+            <i class="bi bi-people-fill"></i>
+
+            <h2 id="studentCount">0</h2>
+
+            <p>Students</p>
+
+        </div>
+
+        <div class="preview-card">
+
+            <i class="bi bi-building"></i>
+
+            <h2 id="roomCount">0</h2>
+
+            <p>Rooms</p>
+
+        </div>
+
+        <div class="preview-card">
+
+            <i class="bi bi-journal-bookmark-fill"></i>
+
+            <h2 id="examCount">0</h2>
+
+            <p>Examinations</p>
+
+        </div>
+
+        <div class="preview-card">
+
+            <i class="bi bi-grid-3x3-gap-fill"></i>
+
+            <h2 id="seatCount">0</h2>
+
+            <p>Seats Generated</p>
+
+        </div>
+
+    </div>
+
+    <div class="dashboard-footer">
+
+        <small>
+
+            <i class="bi bi-clock-history"></i>
+
+            Last Updated :
+
+            <span id="lastUpdated">--:--:--</span>
+
+        </small>
+
+    </div>
+
+</div>
+
+
+
+                        
+        </div>
+
+    </section>
+
+    <!-- ================= FEATURES ================= -->
+
+    <section id="features" class="features">
+
+        <div class="container">
+
+            <div class="section-title">
+
+                <h2>
+
+                    Why SmartSeat?
+
+                </h2>
+
+                <p>
+
+                    Designed specifically for examination cells to simplify
+                    seating arrangement generation.
+
+                </p>
+
+            </div>
+
+            <div class="row g-4">
+
+                <div class="col-lg-3 col-md-6">
+
+                    <div class="feature-card">
+
+                        <i class="bi bi-grid"></i>
+
+                        <h4>
+
+                            Auto Allocation
+
+                        </h4>
+
+                        <p>
+
+                            Automatically allocates students according to
+                            examination rules.
+
+                        </p>
+
+                    </div>
+
+                </div>
+
+                <div class="col-lg-3 col-md-6">
+
+                    <div class="feature-card">
+
+                        <i class="bi bi-upload"></i>
+
+                        <h4>
+
+                            Excel Upload
+
+                        </h4>
+
+                        <p>
+
+                            Upload student details or enter them manually.
+
+                        </p>
+
+                    </div>
+
+                </div>
+
+                <div class="col-lg-3 col-md-6">
+
+                    <div class="feature-card">
+
+                        <i class="bi bi-file-earmark-pdf"></i>
+
+                        <h4>
+
+                            PDF Reports
+
+                        </h4>
+
+                        <p>
+
+                            Generate professional examination seating sheets.
+
+                        </p>
+
+                    </div>
+
+                </div>
+
+                <div class="col-lg-3 col-md-6">
+
+                    <div class="feature-card">
+
+                        <i class="bi bi-search"></i>
+
+                        <h4>
+
+                            Student Search
+
+                        </h4>
+
+                        <p>
+
+                            Students can instantly find their examination room.
+
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+    <!-- ================= ABOUT ================= -->
+
+    <section id="about" class="about">
+
+        <div class="container">
+
+            <div class="row align-items-center">
+
+                <div class="col-lg-6">
+
+                    <img src="../assets/images/college-logo.png"
+                        class="about-logo"
+                        alt="College Logo">
+
+                </div>
+
+                <div class="col-lg-6">
+
+                    <h2>
+
+                        About SmartSeat
+
+                    </h2>
+
+                    <p>
+
+                        SmartSeat is a modern web application developed to
+                        automate examination seating arrangements for
+                        educational institutions.
+
+                    </p>
+
+                    <p>
+
+                        The system enables teachers to manage student data,
+                        classrooms, seating rules and examination schedules,
+                        while allowing students to quickly locate their
+                        assigned examination hall.
+
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+    <!-- ================= FOOTER ================= -->
+
+    <footer>
+
+        <div class="container text-center">
+
+            <img
+    src="../assets/images/college-logo.png"
+    class="footer-logo"
+    alt="Logo">
+            <h5>
+
+                Malik Deenar College of Graduate Studies
+
+            </h5>
+
+            <p>
+
+                SmartSeat - Examination Seating Management System
+
+            </p>
+
+            <p>
+
+                © 2026 SmartSeat | All Rights Reserved
+
+            </p>
+
+        </div>
+
+    </footer>
+
+    <!-- Bootstrap JS -->
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script src="../js/storage.js"></script>
+
+<script src="../js/landing.js"></script>
+
+<script src="../js/script.js"></script>
+
+</body>
+
+</html>
