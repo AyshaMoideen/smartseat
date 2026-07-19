@@ -17,21 +17,6 @@ Modern Examination Seating Management System for Educational Institutions
 ![JavaScript](https://img.shields.io/badge/JavaScript-ES6-yellow)
 ![Node.js](https://img.shields.io/badge/Node.js-Backend-green)
 
-</p>
-
-# 🎓 SmartSeat
-
-> **Modern Examination Seating Management System for Educational Institutions**
-
-![Version](https://img.shields.io/badge/version-v1.0.0-blue)
-![Status](https://img.shields.io/badge/status-Active-success)
-![HTML](https://img.shields.io/badge/HTML-5-orange)
-![CSS](https://img.shields.io/badge/CSS-3-blue)
-![JavaScript](https://img.shields.io/badge/JavaScript-ES6-yellow)
-![Node.js](https://img.shields.io/badge/Node.js-Backend-green)
-
----
-
 ## 📖 Overview
 
 SmartSeat is a web-based examination seating management system developed to simplify the process of creating examination seating arrangements in colleges and educational institutions.
