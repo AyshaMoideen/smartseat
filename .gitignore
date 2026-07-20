@@ -1,0 +1,4 @@
+node_modules/
+.env
+mongo-test.js
+smartseat zip.zip
