@@ -7,6 +7,8 @@ const connectDB = require("./backend/config/db");
 
 dotenv.config();
 
+console.log("ENV:", process.env.MONGO_URI);
+
 connectDB();
 
 const app = express();
