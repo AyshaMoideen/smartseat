@@ -5,9 +5,10 @@ const path = require("path");
 
 const connectDB = require("./backend/config/db");
 
-dotenv.config();
+const authRoutes = require("./backend/routes/authRoutes");
+const teacherRoutes = require("./backend/routes/teacherRoutes");
 
-console.log("ENV:", process.env.MONGO_URI);
+dotenv.config();
 
 connectDB();
 
@@ -15,6 +16,9 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+
+app.use("/api/auth", authRoutes);
+app.use("/api/teacher", teacherRoutes);
 
 // Serve Frontend
 app.use(express.static(path.join(__dirname, "frontend")));
