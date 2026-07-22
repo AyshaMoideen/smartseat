@@ -7,7 +7,7 @@
    Global Variables
 ========================== */
 
-let students = StorageManager.getStudents();
+let students = [];
 
 let editIndex = -1;
 
@@ -28,41 +28,34 @@ document.getElementById("saveStudentBtn");
 const searchStudent =
 document.getElementById("searchStudent");
 
+const API_URL = "http://localhost:5000/api/students";
+
+const token = localStorage.getItem("token");
 /* ==========================
    Statistics
 ========================== */
 
-function updateStatistics(){
+function updateStatistics() {
 
-    const totalStudents =
-    students.length;
+    document.getElementById("totalStudents").textContent =
+        students.length;
 
-    const departments =
-    [...new Set(
-        students.map(student=>student.department)
-    )];
+    const departments = [
+        ...new Set(students.map(s => s.department))
+    ];
 
-    document.getElementById(
-        "totalStudents"
-    ).textContent =
-    totalStudents;
+    document.getElementById("totalDepartments").textContent =
+        departments.length;
 
-    document.getElementById(
-        "departmentCount"
-    ).textContent =
-    departments.length;
+    const semesters = [
+        ...new Set(students.map(s => s.semester))
+    ];
 
-    document.getElementById(
-        "manualStudents"
-    ).textContent =
-    totalStudents;
+    document.getElementById("totalSemesters").textContent =
+        semesters.length;
 
-    document.getElementById(
-        "importedStudents"
-    ).textContent =
-    localStorage.getItem(
-        "importedStudents"
-    ) || 0;
+    document.getElementById("activeStudents").textContent =
+        students.length;
 
 }
 
@@ -106,7 +99,7 @@ function renderStudents(data = students){
 
             <td>
 
-                ${student.regNo}
+                ${student.registerNumber}
 
             </td>
 
@@ -164,8 +157,8 @@ function renderStudents(data = students){
 
 function refreshStudents(){
 
-    students =
-    StorageManager.getStudents();
+    students = [];
+    
 
     renderStudents();
 
@@ -206,7 +199,7 @@ addStudentBtn.addEventListener("click", () => {
    Save Student
 ========================== */
 
-saveStudentBtn.addEventListener("click", () => {
+saveStudentBtn.addEventListener("click", async () => {
 
     const regNo =
     document.getElementById("regNo")
@@ -279,9 +272,40 @@ saveStudentBtn.addEventListener("click", () => {
 
     /* Add */
 
-    if(editIndex === -1){
+    /* Add */
 
-        StorageManager.addStudent(student);
+if (editIndex === -1) {
+
+    try {
+
+        const response = await fetch(API_URL, {
+
+            method: "POST",
+
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+            },
+
+            body: JSON.stringify({
+
+                registerNumber: regNo,
+                name,
+                department,
+                semester: Number(semester),
+                section: "A"
+
+            })
+
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+
+            throw new Error(data.message);
+
+        }
 
         ActivityManager.addActivity(
             `Added Student : ${name}`
@@ -291,7 +315,26 @@ saveStudentBtn.addEventListener("click", () => {
             "Student Added Successfully"
         );
 
+        studentModal.hide();
+
+        loadStudents();
+
+        return;
+
     }
+
+    catch (error) {
+
+        AlertManager.error(
+            "Error",
+            error.message
+        );
+
+        return;
+
+    }
+
+}
 
     /* Edit */
 
@@ -639,20 +682,7 @@ uploadExcelBtn.addEventListener("click",()=>{
 
         });
 
-        localStorage.setItem(
-
-            "importedStudents",
-
-            Number(
-
-                localStorage.getItem(
-                    "importedStudents"
-                ) || 0
-
-            ) + imported
-
-        );
-
+        
         ActivityManager.addActivity(
 
             `Imported ${imported} Students`
@@ -902,44 +932,6 @@ function updateStatistics(){
 
     )];
 
-    document.getElementById(
-
-        "departmentCount"
-
-    ).textContent =
-
-    departments.length;
-
-    document.getElementById(
-
-        "manualStudents"
-
-    ).textContent =
-
-    students.length -
-
-    Number(
-
-        localStorage.getItem(
-
-            "importedStudents"
-
-        ) || 0
-
-    );
-
-    document.getElementById(
-
-        "importedStudents"
-
-    ).textContent =
-
-    localStorage.getItem(
-
-        "importedStudents"
-
-    ) || 0;
-
 }
 
 /* ==========================
@@ -952,7 +944,7 @@ document.addEventListener(
 
     ()=>{
 
-        refreshStudents();
+        loadStudents();
 
     }
 
@@ -980,4 +972,38 @@ console.log(
 "✅ Students Module Ready"
 
 );
+
+async function loadStudents() {
+
+    try {
+
+        const response = await fetch(API_URL, {
+
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+
+        });
+
+        const data = await response.json();
+
+        students = data.students;
+
+        renderStudents();
+
+    }
+
+    catch (error) {
+
+        console.error(error);
+
+        Swal.fire(
+            "Error",
+            "Unable to load students.",
+            "error"
+        );
+
+    }
+
+}
 
