@@ -9,6 +9,7 @@ const authRoutes = require("./backend/routes/authRoutes");
 const teacherRoutes = require("./backend/routes/teacherRoutes");
 const studentRoutes = require("./backend/routes/studentRoutes");
 const roomRoutes = require("./backend/routes/roomRoutes");
+const examRoutes = require("./backend/routes/examRoutes");
 
 dotenv.config();
 
@@ -23,6 +24,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/teacher", teacherRoutes);
 app.use("/api/students", studentRoutes);
 app.use("/api/rooms", roomRoutes);
+app.use("/api/exams", examRoutes);
 
 // Serve Frontend
 app.use(express.static(path.join(__dirname, "frontend")));
