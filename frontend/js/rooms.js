@@ -1,92 +1,76 @@
 /* ==========================================
    SMARTSEAT
    ROOM MANAGEMENT
-   Part 1
+   MongoDB Version
 ========================================== */
 
 /* ==========================
    Global Variables
 ========================== */
 
-let rooms = StorageManager.getRooms();
+let rooms = [];
+let editingRoomId = null;
 
-let editIndex = -1;
+const API_URL = "http://localhost:5000/api/rooms";
+const token = localStorage.getItem("token");
 
 /* ==========================
    Elements
 ========================== */
 
-const roomTable =
-document.getElementById("roomTable");
+const roomTable = document.getElementById("roomTable");
+const addRoomBtn = document.getElementById("addRoomBtn");
+const saveRoomBtn = document.getElementById("saveRoomBtn");
+const searchRoom = document.getElementById("searchRoom");
 
-const addRoomBtn =
-document.getElementById("addRoomBtn");
-
-const saveRoomBtn =
-document.getElementById("saveRoomBtn");
-
-const roomModal =
-new bootstrap.Modal(
+const roomModal = new bootstrap.Modal(
     document.getElementById("roomModal")
 );
 
-const searchRoom =
-document.getElementById("searchRoom");
-
 /* ==========================
-   Statistics
+   Load Rooms
 ========================== */
 
-function updateStatistics(){
+async function loadRooms() {
 
-    let totalCapacity = 0;
+    try {
 
-    rooms.forEach(room=>{
+        const response = await fetch(API_URL, {
 
-        totalCapacity +=
-        Number(room.capacity);
+            method: "GET",
 
-    });
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
 
-    document.getElementById(
-        "totalRooms"
-    ).textContent =
-    rooms.length;
+        });
 
-    document.getElementById(
-        "totalCapacity"
-    ).textContent =
-    totalCapacity;
+        const data = await response.json();
 
-    document.getElementById(
-        "occupiedRooms"
-    ).textContent =
-    0;
+        if (data.success) {
 
-    document.getElementById(
-        "availableRooms"
-    ).textContent =
-    rooms.length;
+            rooms = data.rooms;
+            renderRooms();
 
-    document.getElementById(
-        "summaryRooms"
-    ).textContent =
-    rooms.length;
+        } else {
 
-    document.getElementById(
-        "summaryCapacity"
-    ).textContent =
-    totalCapacity;
+            AlertManager.error(
+                "Error",
+                data.message || "Unable to load rooms."
+            );
 
-    document.getElementById(
-        "summaryOccupied"
-    ).textContent =
-    0;
+        }
 
-    document.getElementById(
-        "summaryAvailable"
-    ).textContent =
-    rooms.length;
+    } catch (error) {
+
+        console.error(error);
+
+        AlertManager.error(
+            "Server Error",
+            "Unable to connect to server."
+        );
+
+    }
 
 }
 
@@ -94,65 +78,75 @@ function updateStatistics(){
    Render Rooms
 ========================== */
 
-function renderRooms(data = rooms){
+function renderRooms(data = rooms) {
 
     roomTable.innerHTML = "";
 
-    if(data.length===0){
+    if (data.length === 0) {
 
         roomTable.innerHTML = `
-
-        <tr>
-
-            <td
-            colspan="3"
-            class="text-center">
-
-                No Rooms Added
-
-            </td>
-
-        </tr>
-
+            <tr>
+                <td colspan="6" class="text-center">
+                    No Rooms Found
+                </td>
+            </tr>
         `;
 
         updateStatistics();
-
         return;
 
     }
 
-    data.forEach((room,index)=>{
+    const floorNames = {
+        0: "Ground",
+        1: "First",
+        2: "Second",
+        3: "Third"
+    };
+
+    data.forEach(room => {
 
         roomTable.innerHTML += `
 
         <tr>
 
+            <td>${room.roomNumber}</td>
+
+            <td>${floorNames[room.floor] || room.floor}</td>
+
             <td>
-
-                ${room.name}
-
+                ${room.rowsLeft} + ${room.rowsRight}
+                ×
+                ${room.studentsPerBench}
             </td>
 
+            <td>${room.maxCapacity}</td>
+
             <td>
 
-                ${room.capacity}
+                ${
+                    room.isActive
+
+                    ? '<span class="badge bg-success">Active</span>'
+
+                    : '<span class="badge bg-danger">Inactive</span>'
+                }
 
             </td>
 
             <td>
 
                 <button
-                class="btn btn-warning btn-sm me-2"
-                onclick="editRoom(${index})">
+                    class="btn btn-warning btn-sm me-2"
+                    onclick="editRoom('${room._id}')">
 
                     <i class="bi bi-pencil-fill"></i>
 
                 </button>
 
                 <button
-                class="btn btn-danger btn-sm"
-                onclick="deleteRoom(${index})">
+                    class="btn btn-danger btn-sm"
+                    onclick="deleteRoom('${room._id}')">
 
                     <i class="bi bi-trash-fill"></i>
 
@@ -171,46 +165,104 @@ function renderRooms(data = rooms){
 }
 
 /* ==========================
-   Refresh
+   Statistics
 ========================== */
 
-function refreshRooms(){
+function updateStatistics() {
 
-    rooms =
-    StorageManager.getRooms();
+    let totalCapacity = 0;
 
-    renderRooms();
+    rooms.forEach(room => {
+
+        totalCapacity += Number(room.maxCapacity);
+
+    });
+
+    const activeRooms =
+        rooms.filter(room => room.isActive).length;
+
+    const inactiveRooms =
+        rooms.length - activeRooms;
+
+    document.getElementById("totalRooms").textContent =
+        rooms.length;
+
+    document.getElementById("totalCapacity").textContent =
+        totalCapacity;
+
+    document.getElementById("activeRooms").textContent =
+        activeRooms;
+
+    document.getElementById("inactiveRooms").textContent =
+        inactiveRooms;
+
+    document.getElementById("summaryRooms").textContent =
+        rooms.length;
+
+    document.getElementById("summaryCapacity").textContent =
+        totalCapacity;
+
+    document.getElementById("summaryActive").textContent =
+        activeRooms;
+
+    document.getElementById("summaryInactive").textContent =
+        inactiveRooms;
 
 }
 
-console.log(
-"✅ Rooms Part 1 Loaded"
-);
+console.log("✅ Section 1 Loaded");
 
 /* ==========================================
-   PART 2
-   Add & Edit Room
+   SECTION 2
+   ADD / UPDATE ROOM
 ========================================== */
+
+/* ==========================
+   Capacity Preview
+========================== */
+
+const rowsLeftInput = document.getElementById("rowsLeft");
+const rowsRightInput = document.getElementById("rowsRight");
+const studentsPerBenchInput = document.getElementById("studentsPerBench");
+
+function updateCapacityPreview() {
+
+    const left = Number(rowsLeftInput.value) || 0;
+    const right = Number(rowsRightInput.value) || 0;
+    const perBench = Number(studentsPerBenchInput.value) || 0;
+
+    const capacity = (left + right) * perBench;
+
+    document.getElementById("capacityPreview").textContent =
+        `${capacity} Students`;
+
+}
+
+rowsLeftInput.addEventListener("input", updateCapacityPreview);
+rowsRightInput.addEventListener("input", updateCapacityPreview);
+studentsPerBenchInput.addEventListener("input", updateCapacityPreview);
 
 /* ==========================
    Open Add Room Modal
 ========================== */
 
-addRoomBtn.addEventListener("click",()=>{
+addRoomBtn.addEventListener("click", () => {
 
-    editIndex = -1;
-
-    document.getElementById("roomName").value = "";
-
-    document.getElementById("roomCapacity").value = "";
+    editingRoomId = null;
 
     document.querySelector(".modal-title").innerHTML = `
-
         <i class="bi bi-building-fill-add"></i>
-
         Add Room
-
     `;
+
+    document.getElementById("roomNumber").value = "";
+    document.getElementById("floor").value = 0;
+    document.getElementById("rowsLeft").value = 7;
+    document.getElementById("rowsRight").value = 7;
+    document.getElementById("studentsPerBench").value = 3;
+    document.getElementById("roomStatus").value = "true";
+
+    updateCapacityPreview();
 
     roomModal.show();
 
@@ -220,195 +272,250 @@ addRoomBtn.addEventListener("click",()=>{
    Save Room
 ========================== */
 
-saveRoomBtn.addEventListener("click",()=>{
+saveRoomBtn.addEventListener("click", async () => {
 
-    const roomName =
-    document.getElementById("roomName")
-    .value
-    .trim()
-    .toUpperCase();
+    const roomNumber =
+        document.getElementById("roomNumber").value.trim();
 
-    const capacity =
-    document.getElementById("roomCapacity")
-    .value
-    .trim();
+    const floor =
+        Number(document.getElementById("floor").value);
 
-    /* Validation */
+    const rowsLeft =
+        Number(document.getElementById("rowsLeft").value);
 
-    if(!roomName || !capacity){
+    const rowsRight =
+        Number(document.getElementById("rowsRight").value);
 
-        AlertManager.warning(
+    const studentsPerBench =
+        Number(document.getElementById("studentsPerBench").value);
 
-            "Missing Details",
+    const isActive =
+        document.getElementById("roomStatus").value === "true";
 
-            "Please fill all fields."
-
-        );
-
-        return;
-
-    }
-
-    if(Number(capacity) <= 0){
+    if (!roomNumber) {
 
         AlertManager.warning(
-
-            "Invalid Capacity",
-
-            "Capacity must be greater than zero."
-
+            "Missing Room Number",
+            "Please enter a room number."
         );
 
         return;
 
     }
 
-    /* Duplicate Room Check */
+    if (rowsLeft <= 0 || rowsRight <= 0 || studentsPerBench <= 0) {
 
-    const duplicate = rooms.find((room,index)=>{
-
-        return (
-
-            room.name === roomName &&
-
-            index !== editIndex
-
-        );
-
-    });
-
-    if(duplicate){
-
-        AlertManager.error(
-
-            "Duplicate Room",
-
-            "Room already exists."
-
+        AlertManager.warning(
+            "Invalid Layout",
+            "Values must be greater than zero."
         );
 
         return;
 
     }
 
-    const room = {
+    const roomData = {
 
-        name: roomName,
-
-        capacity: Number(capacity)
+        roomNumber,
+        floor,
+        rowsLeft,
+        rowsRight,
+        studentsPerBench,
+        isActive
 
     };
 
-    /* Add */
+    try {
 
-    if(editIndex === -1){
+        let response;
 
-        StorageManager.addRoom(room);
+        if (editingRoomId) {
 
-        ActivityManager.addActivity(
+            response = await fetch(`${API_URL}/${editingRoomId}`, {
 
-            `Added Room : ${roomName}`
+                method: "PUT",
 
-        );
+                headers: {
 
-        AlertManager.success(
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`
 
-            "Room Added Successfully"
+                },
+
+                body: JSON.stringify(roomData)
+
+            });
+
+        } else {
+
+            response = await fetch(API_URL, {
+
+                method: "POST",
+
+                headers: {
+
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`
+
+                },
+
+                body: JSON.stringify(roomData)
+
+            });
+
+        }
+
+        const data = await response.json();
+
+        if (data.success) {
+
+            AlertManager.success(
+
+                editingRoomId
+                    ? "Room Updated Successfully"
+                    : "Room Added Successfully"
+
+            );
+
+            roomModal.hide();
+
+            loadRooms();
+
+        } else {
+
+            AlertManager.error(
+
+                "Error",
+
+                data.message || "Operation failed."
+
+            );
+
+        }
+
+    } catch (error) {
+
+        console.error(error);
+
+        AlertManager.error(
+
+            "Server Error",
+
+            "Something went wrong."
 
         );
 
     }
-
-    /* Edit */
-
-    else{
-
-        rooms[editIndex] = room;
-
-        StorageManager.saveRooms(rooms);
-
-        ActivityManager.addActivity(
-
-            `Updated Room : ${roomName}`
-
-        );
-
-        AlertManager.success(
-
-            "Room Updated Successfully"
-
-        );
-
-    }
-
-    roomModal.hide();
-
-    refreshRooms();
 
 });
+
+console.log("✅ Section 2 Loaded");
+
+/* ==========================================
+   SECTION 3
+   EDIT / DELETE / SEARCH
+========================================== */
 
 /* ==========================
    Edit Room
 ========================== */
 
-function editRoom(index){
+function editRoom(id) {
 
-    editIndex = index;
+    const room = rooms.find(r => r._id === id);
 
-    const room = rooms[index];
+    if (!room) return;
 
-    document.getElementById("roomName").value =
-    room.name;
-
-    document.getElementById("roomCapacity").value =
-    room.capacity;
+    editingRoomId = id;
 
     document.querySelector(".modal-title").innerHTML = `
-
         <i class="bi bi-pencil-square"></i>
-
         Edit Room
-
     `;
+
+    document.getElementById("roomNumber").value = room.roomNumber;
+    document.getElementById("floor").value = room.floor;
+    document.getElementById("rowsLeft").value = room.rowsLeft;
+    document.getElementById("rowsRight").value = room.rowsRight;
+    document.getElementById("studentsPerBench").value = room.studentsPerBench;
+    document.getElementById("roomStatus").value = room.isActive.toString();
+
+    updateCapacityPreview();
 
     roomModal.show();
 
 }
 
-console.log(
-"✅ Rooms Part 2 Loaded"
-);
+/* ==========================
+   Delete Room
+========================== */
 
-/* ==========================================
-   Initialize Page
-========================================== */
+async function deleteRoom(id) {
 
-document.addEventListener("DOMContentLoaded", () => {
+    if (!confirm("Delete this room?")) return;
 
-    refreshRooms();
+    try {
 
-});
+        const response = await fetch(`${API_URL}/${id}`, {
 
-function deleteRoom(index){
+            method: "DELETE",
 
-    if(!confirm("Delete this room?")) return;
+            headers: {
 
-    rooms.splice(index,1);
+                Authorization: `Bearer ${token}`
 
-    StorageManager.saveRooms(rooms);
+            }
 
-    refreshRooms();
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+
+            AlertManager.success(
+                "Room Deleted Successfully"
+            );
+
+            loadRooms();
+
+        } else {
+
+            AlertManager.error(
+                "Error",
+                data.message || "Unable to delete room."
+            );
+
+        }
+
+    } catch (error) {
+
+        console.error(error);
+
+        AlertManager.error(
+            "Server Error",
+            "Something went wrong."
+        );
+
+    }
 
 }
 
-searchRoom.addEventListener("input",()=>{
+/* ==========================
+   Search
+========================== */
+
+searchRoom.addEventListener("input", () => {
 
     const keyword = searchRoom.value
-    .toLowerCase();
+        .trim()
+        .toLowerCase();
 
-    const filtered = rooms.filter(room=>
+    const filtered = rooms.filter(room =>
 
-        room.name.toLowerCase().includes(keyword)
+        room.roomNumber
+            .toString()
+            .toLowerCase()
+            .includes(keyword)
 
     );
 
@@ -416,57 +523,140 @@ searchRoom.addEventListener("input",()=>{
 
 });
 
-const exportBtn =
-document.getElementById("exportRoomsBtn");
+/* ==========================
+   Initialize
+========================== */
 
-if(exportBtn){
+document.addEventListener("DOMContentLoaded", () => {
 
-    exportBtn.onclick = ()=>{
+    loadRooms();
 
-        const csv = [
+    updateCapacityPreview();
 
-            "Room,Capacity",
+});
 
-            ...rooms.map(r=>`${r.name},${r.capacity}`)
+console.log("✅ Section 3 Loaded");
 
-        ].join("\n");
+/* ==========================================
+   SECTION 4
+   EXPORT / CLEAR ALL
+========================================== */
 
-        const blob = new Blob([csv],{
+/* ==========================
+   Export Rooms to CSV
+========================== */
 
-            type:"text/csv"
+const exportBtn = document.getElementById("exportRoomsBtn");
 
-        });
+if (exportBtn) {
 
-        const link =
-        document.createElement("a");
+    exportBtn.addEventListener("click", () => {
 
-        link.href =
-        URL.createObjectURL(blob);
+        if (rooms.length === 0) {
 
-        link.download =
-        "rooms.csv";
+            AlertManager.warning(
+                "No Rooms",
+                "There are no rooms to export."
+            );
 
-        link.click();
-
-    };
-
-}
-
-const clearBtn =
-document.getElementById("clearRoomsBtn");
-
-if(clearBtn){
-
-    clearBtn.onclick = ()=>{
-
-        if(confirm("Delete all rooms?")){
-
-            StorageManager.saveRooms([]);
-
-            refreshRooms();
+            return;
 
         }
 
-    };
+        const csv = [
+
+            "Room Number,Floor,Rows Left,Rows Right,Students Per Bench,Capacity,Status",
+
+            ...rooms.map(room =>
+
+                `${room.roomNumber},${room.floor},${room.rowsLeft},${room.rowsRight},${room.studentsPerBench},${room.maxCapacity},${room.isActive ? "Active" : "Inactive"}`
+
+            )
+
+        ].join("\n");
+
+        const blob = new Blob([csv], {
+            type: "text/csv"
+        });
+
+        const link = document.createElement("a");
+
+        link.href = URL.createObjectURL(blob);
+
+        link.download = "rooms.csv";
+
+        document.body.appendChild(link);
+
+        link.click();
+
+        document.body.removeChild(link);
+
+    });
 
 }
+
+/* ==========================
+   Clear All Rooms
+========================== */
+
+const clearBtn = document.getElementById("clearRoomsBtn");
+
+if (clearBtn) {
+
+    clearBtn.addEventListener("click", async () => {
+
+        if (!confirm("Delete ALL rooms?")) return;
+
+        try {
+
+            const deletePromises = rooms.map(room =>
+
+                fetch(`${API_URL}/${room._id}`, {
+
+                    method: "DELETE",
+
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+
+                })
+
+            );
+
+            await Promise.all(deletePromises);
+
+            AlertManager.success(
+                "All Rooms Deleted Successfully"
+            );
+
+            loadRooms();
+
+        }
+
+        catch (error) {
+
+            console.error(error);
+
+            AlertManager.error(
+                "Server Error",
+                "Unable to delete rooms."
+            );
+
+        }
+
+    });
+
+}
+
+/* ==========================
+   Refresh Helper
+========================== */
+
+function refreshRooms() {
+
+    loadRooms();
+
+}
+
+console.log("✅ Section 4 Loaded");
+

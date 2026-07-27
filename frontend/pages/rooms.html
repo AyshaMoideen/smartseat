@@ -34,257 +34,419 @@ rel="stylesheet">
 <body>
 
 <!-- ===========================
-Room Modal
+     Sidebar
 =========================== -->
-
-<div class="modal fade"
-id="roomModal"
-tabindex="-1">
-
-<div class="modal-dialog">
-
-<div class="modal-content">
-
-<div class="modal-header">
-
-<h4 class="modal-title">
-
-<i class="bi bi-building-fill-add"></i>
-
-Add Room
-
-</h4>
-
-<button
-class="btn-close"
-data-bs-dismiss="modal">
-</button>
-
-</div>
-
-<div class="modal-body">
-
-<div class="mb-3">
-
-<label>
-
-Room Number
-
-</label>
-
-<input
-type="text"
-id="roomName"
-class="form-control"
-placeholder="Example : Room 101">
-
-</div>
-
-<div class="mb-3">
-
-<label>
-
-Capacity
-
-</label>
-
-<input
-type="number"
-id="roomCapacity"
-class="form-control"
-placeholder="30">
-
-</div>
-
-</div>
-
-<div class="modal-footer">
-
-<button
-class="btn btn-secondary"
-data-bs-dismiss="modal">
-
-Cancel
-
-</button>
-
-<button
-id="saveRoomBtn"
-class="btn btn-primary">
-
-Save Room
-
-</button>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-<!-- Sidebar -->
 
 <div id="sidebar"></div>
 
-<!-- Main -->
+<!-- ===========================
+     Main Content
+=========================== -->
 
 <div class="main">
 
-<div id="topbar"></div>
+    <!-- Topbar -->
 
-<div class="rooms-container">
+    <div id="topbar"></div>
 
-<div class="header-section">
+    <div class="rooms-container">
 
-<div>
+        <!-- Header -->
 
-<h2>
+        <div class="header-section">
 
-Room Management
+            <div>
 
-</h2>
+                <h2>
 
-<p>
+                    Room Management
 
-Manage examination rooms and seating capacity.
+                </h2>
 
-</p>
+                <p>
 
-</div>
+                    Manage examination rooms and seating layouts.
 
-<button
-id="addRoomBtn"
-class="btn btn-primary">
+                </p>
 
-<i class="bi bi-plus-circle-fill"></i>
+            </div>
 
-Add Room
+            <button
+                class="btn btn-primary"
+                id="addRoomBtn">
 
-</button>
+                <i class="bi bi-plus-circle-fill"></i>
 
-</div>
+                Add Room
 
-<!-- Statistics -->
+            </button>
 
-<div class="stats-grid">
+        </div>
 
-<div class="stat-card">
+        <!-- Statistics -->
 
-<i class="bi bi-building-fill"></i>
+        <div class="stats-grid">
 
-<h3 id="totalRooms">
+            <div class="stat-card">
 
-0
+                <i class="bi bi-building-fill"></i>
 
-</h3>
+                <h3 id="totalRooms">
 
-<p>
+                    0
 
-Rooms
+                </h3>
 
-</p>
+                <p>
 
-</div>
+                    Total Rooms
 
-<div class="stat-card">
+                </p>
 
-<i class="bi bi-grid-fill"></i>
+            </div>
 
-<h3 id="totalCapacity">
+            <div class="stat-card">
 
-0
+                <i class="bi bi-grid-fill"></i>
 
-</h3>
+                <h3 id="totalCapacity">
 
-<p>
+                    0
 
-Capacity
+                </h3>
 
-</p>
+                <p>
 
-</div>
+                    Total Capacity
 
-<div class="stat-card">
+                </p>
 
-<i class="bi bi-check-circle-fill"></i>
+            </div>
 
-<h3 id="occupiedRooms">
+            <div class="stat-card">
 
-0
+                <i class="bi bi-check-circle-fill"></i>
 
-</h3>
+                <h3 id="activeRooms">
 
-<p>
+                    0
 
-Occupied
+                </h3>
 
-</p>
+                <p>
 
-</div>
+                    Active Rooms
 
-<div class="stat-card">
+                </p>
 
-<i class="bi bi-door-open-fill"></i>
+            </div>
 
-<h3 id="availableRooms">
+            <div class="stat-card">
 
-0
+                <i class="bi bi-x-circle-fill"></i>
 
-</h3>
+                <h3 id="inactiveRooms">
 
-<p>
+                    0
 
-Available
+                </h3>
 
-</p>
+                <p>
 
-</div>
+                    Inactive Rooms
 
-</div>
+                </p>
 
-<!-- Search -->
+            </div>
 
-<div class="search-box">
+        </div>
 
-<input
-type="text"
-id="searchRoom"
-class="form-control"
-placeholder="Search Room">
+        <!-- Search -->
 
-</div>
+        <div class="search-box mt-4">
 
-<!-- Table -->
+            <input
+                type="text"
+                id="searchRoom"
+                class="form-control"
+                placeholder="Search by Room Number">
 
-<div class="table-responsive">
+        </div>
 
-<table class="table table-hover">
+        <!-- Room Table -->
 
-<thead>
+        <div class="table-responsive mt-4">
 
-<tr>
+            <table class="table table-hover">
 
-<th>Room</th>
+                <thead>
 
-<th>Capacity</th>
+                    <tr>
 
-<th width="150">
+                        <th>Room</th>
 
-Action
+                        <th>Floor</th>
 
-</th>
+                        <th>Layout</th>
 
-</tr>
+                        <th>Capacity</th>
 
-</thead>
+                        <th>Status</th>
 
-<tbody id="roomTable">
+                        <th width="180">
 
-</tbody>
+                            Action
 
-</table>
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody id="roomTable">
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+<!-- ===========================
+     Room Modal
+=========================== -->
+
+<div
+    class="modal fade"
+    id="roomModal"
+    tabindex="-1">
+
+    <div class="modal-dialog">
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+
+                <h4 class="modal-title">
+
+                    <i class="bi bi-building-fill-add"></i>
+
+                    Add Room
+
+                </h4>
+
+                <button
+                    class="btn-close"
+                    data-bs-dismiss="modal">
+
+                </button>
+
+            </div>
+
+            <div class="modal-body">
+
+                <!-- Room Number -->
+
+                <div class="mb-3">
+
+                    <label class="form-label">
+
+                        Room Number
+
+                    </label>
+
+                    <input
+                        type="text"
+                        id="roomNumber"
+                        class="form-control"
+                        placeholder="Example : 101">
+
+                </div>
+
+                <!-- Floor -->
+
+                <div class="mb-3">
+
+                    <label class="form-label">
+
+                        Floor
+
+                    </label>
+
+                    <select
+                        id="floor"
+                        class="form-select">
+
+                        <option value="0">
+
+                            Ground Floor
+
+                        </option>
+
+                        <option value="1">
+
+                            First Floor
+
+                        </option>
+
+                        <option value="2">
+
+                            Second Floor
+
+                        </option>
+
+                    </select>
+
+                </div>
+
+                <!-- Rows -->
+
+                <div class="row">
+
+                    <div class="col-md-6">
+
+                        <label class="form-label">
+
+                            Rows (Left)
+
+                        </label>
+
+                        <input
+                            type="number"
+                            id="rowsLeft"
+                            class="form-control"
+                            value="7"
+                            min="1">
+
+                    </div>
+
+                    <div class="col-md-6">
+
+                        <label class="form-label">
+
+                            Rows (Right)
+
+                        </label>
+
+                        <input
+                            type="number"
+                            id="rowsRight"
+                            class="form-control"
+                            value="7"
+                            min="1">
+
+                    </div>
+
+                </div>
+
+                <br>
+
+                <!-- Students Per Bench -->
+
+                <div class="mb-3">
+
+                    <label class="form-label">
+
+                        Students Per Bench
+
+                    </label>
+
+                    <select
+                        id="studentsPerBench"
+                        class="form-select">
+
+                        <option value="2">
+
+                            2 Students
+
+                        </option>
+
+                        <option
+                            value="3"
+                            selected>
+
+                            3 Students
+
+                        </option>
+
+                    </select>
+
+                </div>
+
+                <!-- Status -->
+
+                <div class="mb-3">
+
+                    <label class="form-label">
+
+                        Status
+
+                    </label>
+
+                    <select
+                        id="roomStatus"
+                        class="form-select">
+
+                        <option
+                            value="true"
+                            selected>
+
+                            Active
+
+                        </option>
+
+                        <option value="false">
+
+                            Inactive
+
+                        </option>
+
+                    </select>
+
+                </div>
+
+                <!-- Capacity Preview -->
+
+                <div class="alert alert-info text-center">
+
+                    <strong>
+
+                        Maximum Capacity
+
+                    </strong>
+
+                    <h4 id="capacityPreview">
+
+                        42 Students
+
+                    </h4>
+
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+
+                <button
+                    class="btn btn-secondary"
+                    data-bs-dismiss="modal">
+
+                    Cancel
+
+                </button>
+
+                <button
+                    id="saveRoomBtn"
+                    class="btn btn-primary">
+
+                    Save Room
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
 
 </div>
 
@@ -338,9 +500,9 @@ Action
 
             <p>
 
-                <strong>Occupied Rooms :</strong>
+                <strong>Active Rooms :</strong>
 
-                <span id="summaryOccupied">
+                <span id="summaryActive">
 
                     0
 
@@ -350,9 +512,9 @@ Action
 
             <p>
 
-                <strong>Available Rooms :</strong>
+                <strong>Inactive Rooms :</strong>
 
-                <span id="summaryAvailable">
+                <span id="summaryInactive">
 
                     0
 
@@ -406,7 +568,7 @@ Action
 
 </div>
 
-</div>
+    </div>
 
 </div>
 
@@ -425,8 +587,6 @@ Action
 <!-- ===========================
      SmartSeat Scripts
 =========================== -->
-
-<script src="../js/storage.js"></script>
 
 <script src="../js/activity.js"></script>
 
