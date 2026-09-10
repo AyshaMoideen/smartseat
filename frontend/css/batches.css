@@ -1,0 +1,77 @@
+/* ==========================================
+   SMARTSEAT
+   BATCH MASTER
+========================================== */
+
+.batch-container {
+    padding: 30px;
+}
+
+.batch-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.batch-header h2 {
+    margin: 0;
+    font-weight: 700;
+}
+
+.batch-header p {
+    margin-top: 5px;
+    color: #777;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+}
+
+.stat-card {
+    padding: 25px;
+    border-radius: 15px;
+    background: white;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+}
+
+.stat-card i {
+    font-size: 30px;
+}
+
+.stat-card h3 {
+    margin-top: 10px;
+    font-size: 32px;
+}
+
+.batch-table {
+    background: white;
+    border-radius: 15px;
+    padding: 20px;
+}
+
+.summary-card,
+.action-card {
+    background: white;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+}
+
+@media (max-width: 992px) {
+
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+}
+
+@media (max-width: 576px) {
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+}

@@ -31,6 +31,105 @@ document.getElementById("searchStudent");
 const API_URL = "http://localhost:5000/api/students";
 
 const token = localStorage.getItem("token");
+const BATCH_API_URL =
+    "http://localhost:5000/api/batches";
+
+/* ==========================================
+   STUDENT MASTER
+   LOAD BATCHES
+========================================== */
+
+async function loadStudentBatches() {
+
+    const batchSelect =
+        document.getElementById("studentBatch");
+
+
+    if (!batchSelect) {
+        return;
+    }
+
+
+    try {
+
+        const response = await fetch(
+            BATCH_API_URL,
+            {
+                method: "GET",
+
+                headers: {
+                    "Authorization":
+                        `Bearer ${token}`
+                }
+            }
+        );
+
+
+        const data =
+            await response.json();
+
+
+        if (!response.ok || !data.success) {
+
+            throw new Error(
+                data.message ||
+                "Unable to load batches."
+            );
+
+        }
+
+
+        batchSelect.innerHTML = `
+            <option value="">
+                Select Batch
+            </option>
+        `;
+
+
+        data.batches.forEach(batch => {
+
+            const option =
+                document.createElement("option");
+
+
+            option.value = batch._id;
+
+
+            option.textContent =
+                `${batch.batchName} (${batch.prefix})`;
+
+
+            option.dataset.prefix =
+                batch.prefix;
+
+
+            batchSelect.appendChild(option);
+
+        });
+
+
+        console.log(
+            "✅ Student batches loaded"
+        );
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Load student batches error:",
+            error
+        );
+
+
+        AlertManager.error(
+            "Batch Loading Error",
+            "Unable to load batches."
+        );
+
+    }
+
+}
 /* ==========================
    Statistics
 ========================== */
@@ -182,13 +281,22 @@ addStudentBtn.addEventListener("click", () => {
     editIndex = -1;
 
     document.getElementById("regNo").value = "";
+
     document.getElementById("studentName").value = "";
+
+    document.getElementById("studentBatch").value = "";
+
     document.getElementById("department").value = "";
+
     document.getElementById("semester").value = "";
 
     document.querySelector(".modal-title").innerHTML = `
         <i class="bi bi-person-plus-fill"></i>
         Add Student
+    `;
+    saveStudentBtn.innerHTML = `
+        <i class="bi bi-check-circle-fill"></i>
+        Save Student
     `;
 
     studentModal.show();
@@ -198,36 +306,47 @@ addStudentBtn.addEventListener("click", () => {
 /* ==========================
    Save Student
 ========================== */
-
 saveStudentBtn.addEventListener("click", async () => {
 
+    console.log("🔥 SAVE BUTTON CLICKED");
+
+    console.log("1️⃣ Starting save...");
+
     const regNo =
-    document.getElementById("regNo")
-    .value
-    .trim()
-    .toUpperCase();
+        document.getElementById("regNo")
+            .value
+            .trim()
+            .toUpperCase();
 
     const name =
-    document.getElementById("studentName")
-    .value
-    .trim();
+        document.getElementById("studentName")
+            .value
+            .trim();
 
     const department =
-    document.getElementById("department")
-    .value;
+        document.getElementById("department")
+            .value;
 
     const semester =
-    document.getElementById("semester")
-    .value;
+        document.getElementById("semester")
+            .value;
 
-    /* Validation */
+    console.log("2️⃣ VALUES:", {
+        regNo,
+        name,
+        department,
+        semester
+    });
+    // =======================================
+    // VALIDATION
+    // =======================================
 
-    if(
+    if (
         !regNo ||
         !name ||
         !department ||
         !semester
-    ){
+    ) {
 
         AlertManager.warning(
             "Missing Details",
@@ -235,22 +354,66 @@ saveStudentBtn.addEventListener("click", async () => {
         );
 
         return;
-
     }
+    console.log("3️⃣ VALIDATION PASSED");
 
-    /* Duplicate Register Number */
 
-    const duplicate =
-    students.find((student,index)=>{
+    // =======================================
+    // GET CURRENT STUDENT WHEN EDITING
+    // =======================================
 
-        return (
-            student.regNo === regNo &&
-            index !== editIndex
+    const currentStudent =
+        editIndex !== -1
+            ? students[editIndex]
+            : null;
+
+
+    // =======================================
+    // CHECK STUDENT ID
+    // =======================================
+
+    if (
+        editIndex !== -1 &&
+        (!currentStudent || !currentStudent._id)
+    ) {
+
+        console.error(
+            "Invalid student:",
+            currentStudent
         );
 
-    });
+        AlertManager.error(
+            "Update Failed",
+            "Student ID not found."
+        );
 
-    if(duplicate){
+        return;
+    }
+
+
+    // =======================================
+    // DUPLICATE REGISTER NUMBER
+    // =======================================
+
+    const duplicate =
+        students.find((student, index) => {
+
+            const existingRegNo =
+                String(
+                    student.registerNumber || ""
+                )
+                .trim()
+                .toUpperCase();
+
+            return (
+                existingRegNo === regNo &&
+                index !== editIndex
+            );
+
+        });
+
+
+    if (duplicate) {
 
         AlertManager.error(
             "Duplicate Register Number",
@@ -258,107 +421,230 @@ saveStudentBtn.addEventListener("click", async () => {
         );
 
         return;
-
     }
 
-    const student = {
 
-        regNo,
-        name,
-        department,
-        semester
+    // =======================================
+    // ADD STUDENT
+    // =======================================
 
-    };
+    if (editIndex === -1) {
+        console.log("4️⃣ ADD MODE - ABOUT TO SEND POST REQUEST");
 
-    /* Add */
+        try {
+            console.log("5️⃣ POST REQUEST STARTING", API_URL);
 
-    /* Add */
+            const response = await fetch(
+    API_URL,
+    {
+        method: "POST",
 
-if (editIndex === -1) {
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+        },
 
-    try {
+        body: JSON.stringify({
+            registerNumber: regNo,
+            name: name,
+            department: department,
+            semester: Number(semester),
+            section: "A"
+        })
+    }
+);
 
-        const response = await fetch(API_URL, {
+console.log(
+    "📡 POST STATUS:",
+    response.status
+);
 
-            method: "POST",
+const data = await response.json();
 
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`
-            },
+console.log(
+    "📦 POST RESPONSE:",
+    data
+);
 
-            body: JSON.stringify({
 
-                registerNumber: regNo,
-                name,
-                department,
-                semester: Number(semester),
-                section: "A"
+            if (!response.ok) {
 
-            })
+                throw new Error(
+                    data.message ||
+                    "Unable to add student."
+                );
 
-        });
+            }
 
-        const data = await response.json();
 
-        if (!response.ok) {
+            ActivityManager.addActivity(
+                `Added Student : ${name}`
+            );
 
-            throw new Error(data.message);
+
+            AlertManager.success(
+                "Student Added Successfully"
+            );
+
+
+            studentModal.hide();
+
+
+            // Reload from MongoDB
+
+            await loadStudents();
+
+
+            return;
 
         }
 
-        ActivityManager.addActivity(
-            `Added Student : ${name}`
-        );
+        catch (error) {
 
-        AlertManager.success(
-            "Student Added Successfully"
-        );
+            console.error(
+                "Add student error:",
+                error
+            );
 
-        studentModal.hide();
 
-        loadStudents();
+            AlertManager.error(
+                "Error",
+                error.message ||
+                "Unable to connect to server."
+            );
 
-        return;
 
-    }
+            return;
 
-    catch (error) {
-
-        AlertManager.error(
-            "Error",
-            error.message
-        );
-
-        return;
+        }
 
     }
 
-}
 
-    /* Edit */
+    // =======================================
+    // UPDATE STUDENT
+    // =======================================
 
-    else{
+    const student =
+        students[editIndex];
 
-        students[editIndex] = student;
 
-        StorageManager.saveStudents(
-            students
+    try {
+
+        console.log(
+            "Updating student:",
+            student
         );
+
+
+        const response =
+            await fetch(
+                `${API_URL}/${student._id}`,
+                {
+
+                    method: "PUT",
+
+                    headers: {
+
+                        "Content-Type":
+                            "application/json",
+
+                        "Authorization":
+                            `Bearer ${token}`
+
+                    },
+
+                    body: JSON.stringify({
+
+                        registerNumber:
+                            regNo,
+
+                        name:
+                            name,
+
+                        department:
+                            department,
+
+                        semester:
+                            Number(semester),
+
+                        section:
+                            student.section || "A"
+
+                    })
+
+                }
+            );
+
+
+        const data =
+            await response.json();
+
+
+        console.log(
+            "Update response:",
+            data
+        );
+
+
+        if (
+            !response.ok ||
+            !data.success
+        ) {
+
+            AlertManager.error(
+                "Update Failed",
+                data.message ||
+                "Unable to update student."
+            );
+
+            return;
+        }
+
+
+        // ===================================
+        // SUCCESS
+        // ===================================
 
         ActivityManager.addActivity(
             `Updated Student : ${name}`
         );
 
+
         AlertManager.success(
             "Student Updated Successfully"
         );
 
+
+        studentModal.hide();
+
+
+        // Reset edit mode
+
+        editIndex = -1;
+
+
+        // Reload fresh data from MongoDB
+
+        await loadStudents();
+
+
     }
 
-    studentModal.hide();
+    catch (error) {
 
-    refreshStudents();
+    console.error(
+        "UPDATE STUDENT FRONTEND ERROR:",
+        error
+    );
+
+    AlertManager.error(
+        "Update Error",
+        error.message || "Unable to update student."
+    );
+
+
+    }
 
 });
 
@@ -366,33 +652,70 @@ if (editIndex === -1) {
    Edit Student
 ========================== */
 
-function editStudent(index){
+function editStudent(index) {
 
     editIndex = index;
 
-    const student = students[index];
+    const student =
+        students[index];
+
+
+    if (!student) {
+
+        AlertManager.error(
+            "Student Not Found",
+            "Unable to find the selected student."
+        );
+
+        return;
+    }
+
+
+    console.log(
+        "Editing student:",
+        student
+    );
+
 
     document.getElementById("regNo").value =
-    student.regNo;
+        student.registerNumber || "";
+
 
     document.getElementById("studentName").value =
-    student.name;
+        student.name || "";
+
 
     document.getElementById("department").value =
-    student.department;
+        student.department || "";
+
 
     document.getElementById("semester").value =
-    student.semester;
+        student.semester || "";
 
-    document.querySelector(".modal-title").innerHTML = `
+
+    document.querySelector(
+        ".modal-title"
+    ).innerHTML = `
+
         <i class="bi bi-pencil-square"></i>
+
         Edit Student
+
     `;
+
+
+    saveStudentBtn.innerHTML = `
+
+        <i class="bi bi-pencil-fill"></i>
+
+        Update Student
+
+    `;
+
 
     studentModal.show();
 
 }
-
 /* ==========================================
    PART 3
    Delete & Search Student
@@ -402,11 +725,19 @@ function editStudent(index){
    Delete Student
 ========================== */
 
-function deleteStudent(index){
+async function deleteStudent(index) {
 
     const student = students[index];
 
-    Swal.fire({
+    if (!student) {
+        AlertManager.error(
+            "Student Not Found",
+            "Unable to find the selected student."
+        );
+        return;
+    }
+
+    const result = await Swal.fire({
 
         title: "Delete Student?",
 
@@ -424,34 +755,64 @@ function deleteStudent(index){
 
         cancelButtonText: "Cancel"
 
-    }).then((result)=>{
+    });
 
-        if(!result.isConfirmed){
+    if (!result.isConfirmed) {
+        return;
+    }
+
+    try {
+
+        const response = await fetch(
+            `${API_URL}/${student._id}`,
+            {
+                method: "DELETE",
+
+                headers: {
+                    "Authorization": `Bearer ${token}`
+                }
+            }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+
+            AlertManager.error(
+                "Unable to Delete Student",
+                data.message || "Something went wrong."
+            );
 
             return;
-
         }
 
-        StorageManager.deleteStudent(index);
-
         ActivityManager.addActivity(
-
             `Deleted Student : ${student.name}`
-
         );
 
         AlertManager.success(
-
-            "Student Deleted Successfully"
-
+            "Student Deleted",
+            "Student deleted successfully."
         );
 
-        refreshStudents();
+        await loadStudents();
 
-    });
+    }
+    catch (error) {
+
+        console.error(
+            "Delete student error:",
+            error
+        );
+
+        AlertManager.error(
+            "Server Error",
+            "Unable to connect to the server."
+        );
+
+    }
 
 }
-
 /* ==========================
    Search Student
 ========================== */
@@ -515,7 +876,56 @@ searchStudent.addEventListener("keyup",()=>{
     renderStudents(filtered);
 
 });
+/* ==========================
+   Search Student
+========================== */
 
+searchStudent.addEventListener("input", () => {
+
+    const value = searchStudent.value
+        .trim()
+        .toLowerCase();
+
+    if (value === "") {
+
+        renderStudents();
+
+        return;
+
+    }
+
+    const filtered = students.filter(student => {
+
+        return (
+
+            student.registerNumber
+                .toLowerCase()
+                .includes(value)
+
+            ||
+
+            student.name
+                .toLowerCase()
+                .includes(value)
+
+            ||
+
+            student.department
+                .toLowerCase()
+                .includes(value)
+
+            ||
+
+            String(student.semester)
+                .includes(value)
+
+        );
+
+    });
+
+    renderStudents(filtered);
+
+});
 /* ==========================
    Enter Key Search
 ========================== */
@@ -939,15 +1349,14 @@ function updateStatistics(){
 ========================== */
 
 document.addEventListener(
-
     "DOMContentLoaded",
+    async () => {
 
-    ()=>{
+        await loadStudentBatches();
 
-        loadStudents();
+        await loadStudents();
 
     }
-
 );
 
 const exportBtn =
@@ -975,27 +1384,57 @@ console.log(
 
 async function loadStudents() {
 
+    console.log("🔄 LOAD STUDENTS STARTING");
+
     try {
 
-        const response = await fetch(API_URL, {
+        const response = await fetch(
+            `${API_URL}?t=${Date.now()}`,
+            {
+                method: "GET",
 
-            headers: {
-                Authorization: `Bearer ${token}`
+                cache: "no-store",
+
+                headers: {
+                    "Authorization": `Bearer ${token}`,
+                    "Cache-Control": "no-cache"
+                }
             }
+        );
 
-        });
+        console.log(
+            "📡 GET STATUS:",
+            response.status
+        );
 
         const data = await response.json();
 
-        students = data.students;
+        console.log(
+            "📦 STUDENTS FROM SERVER:",
+            data
+        );
+
+        students = data.students || [];
+
+        console.log(
+            "👨‍🎓 STUDENT COUNT:",
+            students.length
+        );
 
         renderStudents();
+
+        console.log(
+            "✅ STUDENTS RENDERED"
+        );
 
     }
 
     catch (error) {
 
-        console.error(error);
+        console.error(
+            "❌ LOAD STUDENTS ERROR:",
+            error
+        );
 
         Swal.fire(
             "Error",
@@ -1004,6 +1443,146 @@ async function loadStudents() {
         );
 
     }
-
 }
 
+/* ==========================================
+   STUDENT MASTER
+   REGISTER NUMBER GENERATOR
+========================================== */
+
+function generateRegisterNumber() {
+
+    const batchSelect =
+        document.getElementById("studentBatch");
+
+    const departmentSelect =
+        document.getElementById("department");
+
+    const regNoInput =
+        document.getElementById("regNo");
+
+    const preview =
+        document.getElementById("regNoPreview");
+
+
+    if (
+        !batchSelect ||
+        !departmentSelect ||
+        !regNoInput
+    ) {
+        return;
+    }
+
+
+    const selectedBatch =
+        batchSelect.options[
+            batchSelect.selectedIndex
+        ];
+
+
+    const prefix =
+        selectedBatch?.dataset?.prefix || "";
+
+
+    const department =
+        departmentSelect.value;
+
+
+    if (!prefix || !department) {
+
+        regNoInput.value = "";
+
+        if (preview) {
+
+            preview.textContent =
+                "Select batch and department";
+
+        }
+
+        return;
+    }
+
+
+    let departmentCode = "";
+
+
+    switch (department) {
+
+        case "BCA":
+            departmentCode = "BCA";
+            break;
+
+        case "BSc CS":
+            departmentCode = "BSC";
+            break;
+
+        case "BCom":
+            departmentCode = "BCOM";
+            break;
+
+        case "BBA":
+            departmentCode = "BBA";
+            break;
+
+        case "BA English":
+            departmentCode = "BAE";
+            break;
+
+        case "BA Economics":
+            departmentCode = "BAECO";
+            break;
+
+        default:
+            departmentCode = "";
+    }
+
+
+    if (!departmentCode) {
+
+        regNoInput.value = "";
+
+        preview.textContent =
+            "Invalid department";
+
+        return;
+    }
+
+
+    const generated =
+        `${prefix}${departmentCode}001`;
+
+
+    regNoInput.value =
+        generated;
+
+
+    if (preview) {
+
+        preview.textContent =
+            `Preview: ${generated}`;
+
+    }
+
+}
+const studentBatch =
+    document.getElementById("studentBatch");
+
+if (studentBatch) {
+
+    studentBatch.addEventListener(
+        "change",
+        generateRegisterNumber
+    );
+
+}
+const studentDepartment =
+    document.getElementById("department");
+
+if (studentDepartment) {
+
+    studentDepartment.addEventListener(
+        "change",
+        generateRegisterNumber
+    );
+
+}

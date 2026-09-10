@@ -66,10 +66,19 @@
                         </label>
 
                         <input
-                            type="text"
-                            id="regNo"
-                            class="form-control"
-                            placeholder="MD24BCA001">
+    type="text"
+    id="regNo"
+    class="form-control"
+    placeholder="Register number will be generated"
+    readonly>
+
+    <small
+    id="regNoPreview"
+    class="text-muted">
+    
+    Select batch and department
+
+</small>
 
                     </div>
 
@@ -91,26 +100,63 @@
 
                     <div class="col-md-6">
 
-                        <label class="form-label">
+    <label class="form-label">
+        Batch
+    </label>
 
-                            Department
+    <select
+        id="studentBatch"
+        class="form-select">
 
-                        </label>
+        <option value="">
+            Select Batch
+        </option>
 
-                        <select
-                            id="department"
-                            class="form-select">
+    </select>
 
-                            <option value="">Select Department</option>
+</div>
+                
+<div class="col-md-6">
 
-                            <option>BCA</option>
-                            <option>BSc CS</option>
-                            <option>BCom</option>
-                            <option>BBA</option>
-                            <option>BA English</option>
-                            <option>BA Economics</option>
+    <label class="form-label">
+        Department
+    </label>
 
-                        </select>
+    <select
+        id="department"
+        class="form-select">
+
+        <option value="">
+            Select Department
+        </option>
+
+        <option value="BCA">
+            BCA
+        </option>
+
+        <option value="BSc CS">
+            BSc CS
+        </option>
+
+        <option value="BCom">
+            BCom
+        </option>
+
+        <option value="BBA">
+            BBA
+        </option>
+
+        <option value="BA English">
+            BA English
+        </option>
+
+        <option value="BA Economics">
+            BA Economics
+        </option>
+
+    </select>
+
+</div>
 
                     </div>
 
