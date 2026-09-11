@@ -1,86 +1,195 @@
-/* ==========================================
-   SMARTSEAT
-   NOMINAL ROLL MANAGER
-========================================== */
+// ==========================================
+// SmartSeat
+// Nominal Roll Manager
+// ==========================================
+
+console.log("Nominal Roll JS Loaded");
+
+const API_URL = "http://localhost:5000/api/exams";
 
 let rolls = [];
-
 let currentStudents = [];
-
 let currentExam = "";
+let currentExamName = "";
+let currentExamData = null;
 
-/* ==========================
-   Elements
-========================== */
 
-const examSelect =
-document.getElementById("examSelect");
+// ==========================================
+// DOM Ready
+// ==========================================
 
-const excelFile =
-document.getElementById("excelFile");
+document.addEventListener("DOMContentLoaded", () => {
 
-const importBtn =
-document.getElementById("importBtn");
-
-const studentTable =
-document.getElementById("studentTable");
-
-const searchStudent =
-document.getElementById("searchStudent");
-
-const totalStudents =
-document.getElementById("totalStudents");
-
-const totalDepartments =
-document.getElementById("totalDepartments");
-
-const totalSemesters =
-document.getElementById("totalSemesters");
-
-const totalFiles =
-document.getElementById("totalFiles");
-
-const summaryStudents =
-document.getElementById("summaryStudents");
-
-const summaryDepartments =
-document.getElementById("summaryDepartments");
-
-const summarySemesters =
-document.getElementById("summarySemesters");
-
-const summaryExam =
-document.getElementById("summaryExam");
-
-const exportExcelBtn =
-document.getElementById("exportExcelBtn");
-
-const clearRollBtn =
-document.getElementById("clearRollBtn");
-
-const downloadSampleBtn =
-document.getElementById("downloadSampleBtn");
-
-/* ==========================================
-   Load Page
-========================================== */
-
-window.onload = function(){
+    console.log("Nominal Roll Page Loaded");
 
     loadExams();
-
     loadRolls();
 
-};
+    const examSelect =
+        document.getElementById("examSelect");
+
+    const importBtn =
+        document.getElementById("importBtn");
+
+    const searchStudent =
+        document.getElementById("searchStudent");
+
+    const exportExcelBtn =
+        document.getElementById("exportExcelBtn");
+
+    const clearRollBtn =
+        document.getElementById("clearRollBtn");
+
+    const downloadSampleBtn =
+        document.getElementById("downloadSampleBtn");
+
+    const uploadExcelBtn =
+        document.getElementById("uploadExcelBtn");
+
+    const excelFiles =
+        document.getElementById("excelFiles");
+
+// --------------------------------------
+// Select Exam
+// --------------------------------------
+
+examSelect.addEventListener("change", () => {
+
+    currentExam = examSelect.value;
+
+    const selectedOption =
+        examSelect.options[examSelect.selectedIndex];
+
+    currentExamName =
+        selectedOption
+            ? selectedOption.textContent.trim()
+            : "";
+
+    console.log("=================================");
+    console.log("EXAM SELECTED");
+    console.log("Exam ID:", currentExam);
+    console.log("Exam Name:", currentExamName);
+    console.log("Available Rolls:", rolls);
+    console.log("=================================");
+
+    // Find nominal roll using Exam ID
+    const foundRoll = rolls.find(roll => {
+
+        return roll.examId === currentExam;
+
+    });
+
+    if (foundRoll) {
+
+        console.log(
+            "Nominal Roll Found:",
+            foundRoll
+        );
+
+        currentStudents =
+            foundRoll.students || [];
+
+    }
+
+    else {
+
+        console.log(
+            "No nominal roll found for this exam."
+        );
+
+        currentStudents = [];
+
+    }
+
+    renderStudents();
+
+});
+    
+    // --------------------------------------
+    // Import
+    // --------------------------------------
+
+    importBtn.addEventListener(
+        "click",
+        importExcelFiles
+    );
+
+
+    // --------------------------------------
+    // Search
+    // --------------------------------------
+
+    searchStudent.addEventListener(
+        "input",
+        searchStudents
+    );
+
+
+    // --------------------------------------
+    // Export
+    // --------------------------------------
+
+    exportExcelBtn.addEventListener(
+        "click",
+        exportExams
+    );
+
+
+    // --------------------------------------
+    // Clear
+    // --------------------------------------
+
+    clearRollBtn.addEventListener(
+        "click",
+        clearCurrentRoll
+    );
+
+
+    // --------------------------------------
+    // Sample
+    // --------------------------------------
+
+    downloadSampleBtn.addEventListener(
+        "click",
+        downloadSample
+    );
+
+
+    // --------------------------------------
+    // Upload button
+    // --------------------------------------
+
+    uploadExcelBtn.addEventListener(
+        "click",
+        () => {
+
+            excelFiles.click();
+
+        }
+    );
+
+});
+
+
+// ==========================================
+// Get Token
+// ==========================================
+
+function getToken() {
+
+    return localStorage.getItem("token");
+
+}
+
 
 /* ==========================================
-   Load Exams
+   LOAD EXAMS FROM MONGODB
 ========================================== */
 
-function loadExams(){
+async function loadExams(){
 
     const examSelect =
-    document.getElementById("examSelect");
+        document.getElementById("examSelect");
 
     if(!examSelect){
 
@@ -90,285 +199,366 @@ function loadExams(){
 
     }
 
-    const exams =
-    StorageManager.getExams();
+    try{
 
-    console.log(exams);
+        const token =
+            localStorage.getItem("token");
 
-    examSelect.innerHTML =
-    `<option value="">Select Examination</option>`;
+        const response =
+            await fetch(
+                "http://localhost:5000/api/exams",
+                {
 
-    exams.forEach(exam=>{
+                    method:"GET",
 
-        examSelect.innerHTML += `
+                    headers:{
 
-        <option value="${exam.name}">
+                        "Content-Type":
+                            "application/json",
 
-            ${exam.name}
+                        ...(token
+                            ? {
+                                Authorization:
+                                    `Bearer ${token}`
+                            }
+                            : {})
 
+                    }
+
+                }
+            );
+
+        if(!response.ok){
+
+            throw new Error(
+                `Failed to load exams: ${response.status}`
+            );
+
+        }
+
+        const data =
+            await response.json();
+
+        console.log(
+            "Exams loaded from MongoDB:",
+            data
+        );
+
+        /*
+         * Backend returns:
+         *
+         * {
+         *   success:true,
+         *   exams:[]
+         * }
+         */
+
+        const exams =
+            data.exams || [];
+
+        examSelect.innerHTML =
+            `<option value="">Select Examination</option>`;
+
+        exams.forEach(exam => {
+
+            examSelect.innerHTML += `
+
+                <option value="${exam._id}">
+
+                    ${exam.examName}
+
+                </option>
+
+            `;
+
+        });
+
+        console.log(
+            `${exams.length} examinations loaded.`
+        );
+
+    }
+
+    catch(error){
+
+        console.error(
+            "Load exams error:",
+            error
+        );
+
+        AlertManager.error(
+
+            "Unable to Load Exams",
+
+            "Could not load examinations from the server."
+
+        );
+
+    }
+
+}
+
+// ==========================================
+// Populate Exam Dropdown
+// ==========================================
+
+function populateExamSelect(exams) {
+
+    const examSelect =
+        document.getElementById(
+            "examSelect"
+        );
+
+
+    examSelect.innerHTML = `
+
+        <option value="">
+            Choose Examination
         </option>
 
+    `;
+
+
+    exams.forEach(exam => {
+
+        const option =
+            document.createElement("option");
+
+
+        option.value =
+            exam._id;
+
+
+        option.textContent =
+            `${exam.examName || "Unnamed Exam"}
+             - Semester ${exam.semester || "-"}`;
+
+
+        option.dataset.examName =
+            exam.examName || "";
+
+
+        examSelect.appendChild(option);
+
+    });
+
+
+    console.log(
+        "Exam dropdown populated."
+    );
+
+}
+
+
+// ==========================================
+// Load Saved Rolls
+// ==========================================
+
+function loadRolls() {
+
+    rolls =
+        JSON.parse(
+            localStorage.getItem(
+                "nominalRolls"
+            )
+        ) || [];
+
+
+    document.getElementById(
+        "totalFiles"
+    ).textContent =
+        rolls.length;
+
+}
+
+// ==========================================
+// Render Students
+// ==========================================
+
+function renderStudents(
+    data = currentStudents
+) {
+
+    const studentTable =
+        document.getElementById(
+            "studentTable"
+        );
+
+
+    studentTable.innerHTML = "";
+
+
+    if (
+        !data ||
+        data.length === 0
+    ) {
+
+        studentTable.innerHTML = `
+
+            <tr>
+
+                <td
+                    colspan="6"
+                    class="text-center">
+
+                    No Students Imported
+
+                </td>
+
+            </tr>
+
+        `;
+
+
+        updateStatistics();
+
+        return;
+
+    }
+
+
+    data.forEach(student => {
+
+        studentTable.innerHTML += `
+
+            <tr>
+
+                <td>
+                    ${student.regNo || "-"}
+                </td>
+
+                <td>
+                    ${student.name || "-"}
+                </td>
+
+                <td>
+                    ${student.department || "-"}
+                </td>
+
+                <td>
+                    ${student.semester || "-"}
+                </td>
+
+                <td>
+                    ${currentExam || "-"}
+                </td>
+
+                <td>
+
+                    <button
+                        class="btn btn-sm btn-danger"
+                        onclick="deleteStudent('${student.regNo}')">
+
+                        <i class="bi bi-trash-fill"></i>
+
+                    </button>
+
+                </td>
+
+            </tr>
+
         `;
 
     });
 
-}
 
-/* ==========================================
-   Load Rolls
-========================================== */
-
-function loadRolls(){
-
-    rolls = JSON.parse(
-
-        localStorage.getItem("nominalRolls")
-
-    ) || [];
-
-    totalFiles.textContent =
-    rolls.length;
+    updateStatistics();
 
 }
-/* ==========================================
-   Change Exam
-========================================== */
 
-examSelect.addEventListener("change",()=>{
 
-    currentExam =
-    examSelect.value;
+// ==========================================
+// Statistics
+// ==========================================
 
-    const found =
+function updateStatistics() {
 
-    rolls.find(r=>{
+    const total =
+        currentStudents.length;
 
-        return r.exam===currentExam;
-
-    });
-
-    if(found){
-
-        currentStudents =
-
-        found.students;
-
-    }
-
-    else{
-
-        currentStudents = [];
-
-    }
-
-    renderStudents();
-
-});
-/* ==========================================
-   Statistics
-========================================== */
-
-function updateStatistics(){
-
-    totalStudents.textContent =
-    currentStudents.length;
-
-    summaryStudents.textContent =
-    currentStudents.length;
 
     const departments =
+        new Set(
+            currentStudents
+                .map(
+                    student =>
+                        student.department
+                )
+                .filter(Boolean)
+        );
 
-    [...new Set(
-
-        currentStudents.map(
-
-            s=>s.department
-
-        )
-
-    )];
-
-    totalDepartments.textContent =
-    departments.length;
-
-    summaryDepartments.textContent =
-    departments.length;
 
     const semesters =
+        new Set(
+            currentStudents
+                .map(
+                    student =>
+                        student.semester
+                )
+                .filter(Boolean)
+        );
 
-    [...new Set(
 
-        currentStudents.map(
+    document.getElementById(
+        "totalStudents"
+    ).textContent =
+        total;
 
-            s=>s.semester
 
-        )
+    document.getElementById(
+        "totalDepartments"
+    ).textContent =
+        departments.size;
 
-    )];
 
-    totalSemesters.textContent =
-    semesters.length;
+    document.getElementById(
+        "totalSemesters"
+    ).textContent =
+        semesters.size;
 
-    summarySemesters.textContent =
-    semesters.length;
 
-    summaryExam.textContent =
+    document.getElementById(
+        "summaryStudents"
+    ).textContent =
+        total;
 
-    currentExam || "-";
 
-}
-/* ==========================================
-   Render Students
-========================================== */
+    document.getElementById(
+        "summaryDepartments"
+    ).textContent =
+        departments.size;
 
-function renderStudents(data=currentStudents){
 
-    studentTable.innerHTML="";
+    document.getElementById(
+        "summarySemesters"
+    ).textContent =
+        semesters.size;
 
-    if(data.length===0){
 
-        studentTable.innerHTML = `
-
-        <tr>
-
-            <td colspan="6"
-
-            class="text-center">
-
-            No Students Imported
-
-            </td>
-
-        </tr>
-
-        `;
-
-        updateStatistics();
-
-        return;
-
-    }
-
-    data.forEach((student,index)=>{
-
-        studentTable.innerHTML += `
-
-        <tr>
-
-            <td>${student.regNo}</td>
-
-            <td>${student.name}</td>
-
-            <td>${student.department}</td>
-
-            <td>${student.semester}</td>
-
-            <td>${currentExam}</td>
-
-            <td>
-
-                <button
-
-                class="btn btn-danger btn-sm"
-
-                onclick="deleteStudent(${index})">
-
-                <i class="bi bi-trash-fill"></i>
-
-                </button>
-
-            </td>
-
-        </tr>
-
-        `;
-
-    });
-
-    updateStatistics();
+    document.getElementById(
+        "summaryExam"
+    ).textContent =
+        currentExamName || "-";
 
 }
-/* ==========================================
-   Render Students
-========================================== */
 
-function renderStudents(data=currentStudents){
+// ==========================================
+// Import Excel Files
+// ==========================================
 
-    studentTable.innerHTML="";
+async function importExcelFiles() {
 
-    if(data.length===0){
+    const examSelect =
+        document.getElementById("examSelect");
 
-        studentTable.innerHTML = `
+    const excelFiles =
+        document.getElementById("excelFiles");
 
-        <tr>
+    // --------------------------------------
+    // Check Exam
+    // --------------------------------------
 
-            <td colspan="6"
-
-            class="text-center">
-
-            No Students Imported
-
-            </td>
-
-        </tr>
-
-        `;
-
-        updateStatistics();
-
-        return;
-
-    }
-
-    data.forEach((student,index)=>{
-
-        studentTable.innerHTML += `
-
-        <tr>
-
-            <td>${student.regNo}</td>
-
-            <td>${student.name}</td>
-
-            <td>${student.department}</td>
-
-            <td>${student.semester}</td>
-
-            <td>${currentExam}</td>
-
-            <td>
-
-                <button
-
-                class="btn btn-danger btn-sm"
-
-                onclick="deleteStudent(${index})">
-
-                <i class="bi bi-trash-fill"></i>
-
-                </button>
-
-            </td>
-
-        </tr>
-
-        `;
-
-    });
-
-    updateStatistics();
-
-}
-/* ==========================================
-   IMPORT EXCEL
-========================================== */
-/* ==========================================
-IMPORT MULTIPLE EXCEL FILES
-========================================== */
-
-importBtn.addEventListener("click", () => {
-
-    if (!currentExam) {
+    if (!examSelect.value) {
 
         AlertManager.warning(
             "Select Examination",
@@ -379,137 +569,352 @@ importBtn.addEventListener("click", () => {
 
     }
 
-    if (excelFiles.files.length === 0) {
+    // --------------------------------------
+    // Check Files
+    // --------------------------------------
+
+    if (
+        !excelFiles.files ||
+        excelFiles.files.length === 0
+    ) {
 
         AlertManager.warning(
             "No Files",
-            "Choose one or more Excel files."
+            "Please choose one or more Excel files."
         );
 
         return;
 
     }
 
-    let importedStudents = [];
+    let importedCount = 0;
 
-    let processed = 0;
+    try {
 
-    Array.from(excelFiles.files).forEach(file => {
+        // ----------------------------------
+        // Read every selected Excel file
+        // ----------------------------------
 
-        const reader = new FileReader();
+        for (
+            const file of excelFiles.files
+        ) {
 
-        reader.onload = function(e){
+            const students =
+                await readExcelFile(file);
 
-            const workbook = XLSX.read(
+            students.forEach(student => {
 
-                new Uint8Array(e.target.result),
+                const exists =
+                    currentStudents.some(
+                        existing =>
+                            existing.regNo ===
+                            student.regNo
+                    );
 
-                {type:"array"}
-
-            );
-
-            const sheet = workbook.Sheets[
-                workbook.SheetNames[0]
-            ];
-
-            const rows = XLSX.utils.sheet_to_json(sheet);
-
-            rows.forEach(row=>{
-
-                const student={
-
-                    regNo:
-                        row["Register No"] ||
-                        row["Reg No"] ||
-                        "",
-
-                    name:
-                        row["Student Name"] ||
-                        row["Name"] ||
-                        "",
-
-                    department:
-                        row["Department"] ||
-                        "",
-
-                    semester:
-                        row["Semester"] ||
-                        ""
-
-                };
-
-                if(
-
-                    !currentStudents.some(
-
-                        s=>s.regNo===student.regNo
-
-                    )
-
-                ){
+                if (
+                    student.regNo &&
+                    !exists
+                ) {
 
                     currentStudents.push(student);
 
-                    importedStudents.push(student);
+                    importedCount++;
 
                 }
 
             });
 
-            processed++;
+        }
 
-            if(processed===excelFiles.files.length){
+        // ----------------------------------
+        // Save Roll
+        // ----------------------------------
 
-                saveCurrentRoll();
+        saveCurrentRoll();
 
-            }
+        // Clear selected files
+        excelFiles.value = "";
 
-        };
+        // ----------------------------------
+        // Success
+        // ----------------------------------
 
-        reader.readAsArrayBuffer(file);
+        AlertManager.success(
+            "Import Successful",
+            `${importedCount} new students imported.`
+        );
 
-    });
+    }
 
-});
-/* ==========================================
-   SAVE CURRENT ROLL
-========================================== */
+    catch (error) {
 
-function saveCurrentRoll(){
+        console.error(
+            "Excel import error:",
+            error
+        );
+
+        AlertManager.error(
+            "Import Failed",
+            error.message
+        );
+
+    }
+
+}
+
+
+// ==========================================
+// Save Current Roll
+// ==========================================
+
+function saveCurrentRoll() {
+
+    const examId =
+        document.getElementById(
+            "examSelect"
+        ).value;
+
+    const examName =
+        currentExamName ||
+        "Unnamed Exam";
+
+    // --------------------------------------
+    // Find existing roll
+    // --------------------------------------
 
     const index =
+        rolls.findIndex(
+            roll =>
+                roll.examId === examId
+        );
 
-    rolls.findIndex(r=>{
+    // --------------------------------------
+    // Create roll
+    // --------------------------------------
 
-        return r.exam===currentExam;
+    const roll = {
 
-    });
+        examId: examId,
 
-    const roll={
-
-        exam:currentExam,
+        exam: examName,
 
         importedOn:
+            new Date().toISOString(),
 
-        new Date()
-
-        .toLocaleDateString(),
-
-        students:currentStudents
+        students:
+            currentStudents
 
     };
 
-    if(index===-1){
+    // --------------------------------------
+    // Add / Update
+    // --------------------------------------
+
+    if (index === -1) {
 
         rolls.push(roll);
 
     }
 
-    else{
+    else {
 
-        rolls[index]=roll;
+        rolls[index] = roll;
 
     }
+
+    // --------------------------------------
+    // Save to Local Storage
+    // --------------------------------------
+
+    localStorage.setItem(
+        "nominalRolls",
+        JSON.stringify(rolls)
+    );
+
+    // --------------------------------------
+    // Update UI
+    // --------------------------------------
+
+    document.getElementById(
+        "totalFiles"
+    ).textContent =
+        rolls.length;
+
+    renderStudents();
+
+    // --------------------------------------
+    // Activity
+    // --------------------------------------
+
+    if (
+        typeof ActivityManager !==
+        "undefined"
+    ) {
+
+        ActivityManager.addActivity(
+            `Imported Nominal Roll : ${examName}`
+        );
+
+    }
+
+}
+
+// ==========================================
+// Read Excel File
+// ==========================================
+
+function readExcelFile(file) {
+
+    return new Promise(
+        (resolve, reject) => {
+
+            const reader =
+                new FileReader();
+
+
+            reader.onload =
+                function(event) {
+
+                    try {
+
+                        const workbook =
+                            XLSX.read(
+
+                                new Uint8Array(
+                                    event.target.result
+                                ),
+
+                                {
+                                    type: "array"
+                                }
+
+                            );
+
+
+                        const sheet =
+                            workbook.Sheets[
+                                workbook.SheetNames[0]
+                            ];
+
+
+                        const rows =
+                            XLSX.utils.sheet_to_json(
+                                sheet
+                            );
+
+
+                        const students =
+                            rows.map(row => ({
+
+                                regNo:
+                                    String(
+                                        row["Register No"] ||
+                                        row["Reg No"] ||
+                                        row["Register Number"] ||
+                                        ""
+                                    ).trim(),
+
+                                name:
+                                    String(
+                                        row["Student Name"] ||
+                                        row["Name"] ||
+                                        ""
+                                    ).trim(),
+
+                                department:
+                                    String(
+                                        row["Department"] ||
+                                        ""
+                                    ).trim(),
+
+                                semester:
+                                    String(
+                                        row["Semester"] ||
+                                        ""
+                                    ).trim()
+
+                            }));
+
+
+                        resolve(students);
+
+                    }
+
+                    catch (error) {
+
+                        reject(error);
+
+                    }
+
+                };
+
+
+            reader.onerror =
+                () => {
+
+                    reject(
+                        new Error(
+                            "Unable to read Excel file."
+                        )
+                    );
+
+                };
+
+
+            reader.readAsArrayBuffer(file);
+
+        }
+    );
+
+}
+
+
+// ==========================================
+// Save Current Roll
+// ==========================================
+
+function saveCurrentRoll() {
+
+    const examId =
+        document.getElementById(
+            "examSelect"
+        ).value;
+
+
+    const index =
+        rolls.findIndex(
+            roll =>
+                roll.examId === examId
+        );
+
+
+    const roll = {
+
+        examId: examId,
+
+        exam: currentExam,
+
+        importedOn:
+            new Date().toISOString(),
+
+        students:
+            currentStudents
+
+    };
+
+
+    if (index === -1) {
+
+        rolls.push(roll);
+
+    }
+
+    else {
+
+        rolls[index] = roll;
+
+    }
+
 
     localStorage.setItem(
 
@@ -519,122 +924,157 @@ function saveCurrentRoll(){
 
     );
 
-    totalFiles.textContent=
 
-    rolls.length;
+    document.getElementById(
+        "totalFiles"
+    ).textContent =
+        rolls.length;
+
 
     renderStudents();
 
-    ActivityManager.addActivity(
 
-        `Imported Nominal Roll : ${currentExam}`
+    if (
+        typeof ActivityManager !==
+        "undefined"
+    ) {
 
-    );
+        ActivityManager.addActivity(
 
-    AlertManager.success(
-
-"Import Successful",
-
-`${currentStudents.length} Total Students Loaded`
-
-);
-
-}
-/* ==========================================
-   SEARCH
-========================================== */
-
-searchStudent.addEventListener("keyup",()=>{
-
-    const value=
-
-    searchStudent.value
-
-    .toLowerCase();
-
-    const filtered=
-
-    currentStudents.filter(student=>{
-
-        return(
-
-            student.regNo
-
-            .toLowerCase()
-
-            .includes(value)
-
-            ||
-
-            student.name
-
-            .toLowerCase()
-
-            .includes(value)
-
-            ||
-
-            student.department
-
-            .toLowerCase()
-
-            .includes(value)
+            `Imported Nominal Roll : ${currentExam}`
 
         );
 
-    });
+    }
+
+}
+
+
+// ==========================================
+// Search
+// ==========================================
+
+function searchStudents() {
+
+    const keyword =
+        document.getElementById(
+            "searchStudent"
+        )
+        .value
+        .toLowerCase()
+        .trim();
+
+
+    const filtered =
+        currentStudents.filter(student => {
+
+            return (
+
+                String(
+                    student.regNo || ""
+                )
+                .toLowerCase()
+                .includes(keyword)
+
+                ||
+
+                String(
+                    student.name || ""
+                )
+                .toLowerCase()
+                .includes(keyword)
+
+                ||
+
+                String(
+                    student.department || ""
+                )
+                .toLowerCase()
+                .includes(keyword)
+
+            );
+
+        });
+
 
     renderStudents(filtered);
 
-});
-/* ==========================================
-   DELETE STUDENT
-========================================== */
+}
 
-function deleteStudent(index){
 
-    Swal.fire({
+// ==========================================
+// Delete Student
+// ==========================================
 
-        title:"Delete Student?",
+async function deleteStudent(regNo) {
 
-        icon:"warning",
+    const result =
+        await Swal.fire({
 
-        showCancelButton:true,
+            title:
+                "Delete Student?",
 
-        confirmButtonText:"Delete"
+            text:
+                "This student will be removed from this nominal roll.",
 
-    }).then(result=>{
+            icon:
+                "warning",
 
-        if(!result.isConfirmed)
+            showCancelButton:
+                true,
+
+            confirmButtonText:
+                "Delete",
+
+            cancelButtonText:
+                "Cancel"
+
+        });
+
+
+    if (
+        !result.isConfirmed
+    ) {
 
         return;
 
-        currentStudents.splice(
+    }
 
-            index,
 
-            1
-
+    currentStudents =
+        currentStudents.filter(
+            student =>
+                student.regNo !== regNo
         );
 
-        saveCurrentRoll();
 
-    });
+    saveCurrentRoll();
+
+
+    AlertManager.success(
+
+        "Deleted",
+
+        "Student removed from nominal roll."
+
+    );
 
 }
-/* ==========================================
-   CLEAR ROLL
-========================================== */
 
-clearRollBtn.addEventListener("click",()=>{
 
-    if(!currentExam){
+// ==========================================
+// Clear Current Roll
+// ==========================================
+
+async function clearCurrentRoll() {
+
+    if (!currentExam) {
 
         AlertManager.warning(
 
             "Select Examination",
 
-            "Choose an exam first."
+            "Please select an examination first."
 
         );
 
@@ -642,68 +1082,96 @@ clearRollBtn.addEventListener("click",()=>{
 
     }
 
-    Swal.fire({
 
-        title:"Clear Nominal Roll?",
+    const result =
+        await Swal.fire({
 
-        text:"All imported students will be removed.",
+            title:
+                "Clear Nominal Roll?",
 
-        icon:"warning",
+            text:
+                `All students for ${currentExam} will be removed.`,
 
-        showCancelButton:true,
+            icon:
+                "warning",
 
-        confirmButtonText:"Yes"
+            showCancelButton:
+                true,
 
-    }).then(result=>{
+            confirmButtonText:
+                "Clear Roll",
 
-        if(!result.isConfirmed)
-
-        return;
-
-        rolls = rolls.filter(r=>{
-
-            return r.exam!==currentExam;
+            cancelButtonText:
+                "Cancel"
 
         });
 
-        localStorage.setItem(
 
-            "nominalRolls",
+    if (
+        !result.isConfirmed
+    ) {
 
-            JSON.stringify(rolls)
+        return;
 
+    }
+
+
+    const examId =
+        document.getElementById(
+            "examSelect"
+        ).value;
+
+
+    rolls =
+        rolls.filter(
+            roll =>
+                roll.examId !== examId
         );
 
-        currentStudents=[];
 
-        loadRolls();
+    currentStudents = [];
 
-        renderStudents();
 
-        AlertManager.success(
+    localStorage.setItem(
 
-            "Cleared",
+        "nominalRolls",
 
-            "Nominal Roll removed."
+        JSON.stringify(rolls)
 
-        );
+    );
 
-    });
 
-});
-/* ==========================================
-   EXPORT EXCEL
-========================================== */
+    loadRolls();
 
-exportExcelBtn.addEventListener("click",()=>{
+    renderStudents();
 
-    if(currentStudents.length===0){
+
+    AlertManager.success(
+
+        "Cleared",
+
+        "Nominal roll removed."
+
+    );
+
+}
+
+
+// ==========================================
+// Export Excel
+// ==========================================
+
+function exportExams() {
+
+    if (
+        currentStudents.length === 0
+    ) {
 
         AlertManager.warning(
 
             "No Data",
 
-            "Nothing to export."
+            "There are no students to export."
 
         );
 
@@ -711,17 +1179,34 @@ exportExcelBtn.addEventListener("click",()=>{
 
     }
 
-    const sheet=
 
-    XLSX.utils.json_to_sheet(
+    const rows =
+        currentStudents.map(
+            student => ({
 
-        currentStudents
+                "Register No":
+                    student.regNo,
 
-    );
+                "Student Name":
+                    student.name,
 
-    const workbook=
+                "Department":
+                    student.department,
 
-    XLSX.utils.book_new();
+                "Semester":
+                    student.semester
+
+            })
+        );
+
+
+    const sheet =
+        XLSX.utils.json_to_sheet(rows);
+
+
+    const workbook =
+        XLSX.utils.book_new();
+
 
     XLSX.utils.book_append_sheet(
 
@@ -729,60 +1214,74 @@ exportExcelBtn.addEventListener("click",()=>{
 
         sheet,
 
-        currentExam
+        "Nominal Roll"
 
     );
+
 
     XLSX.writeFile(
 
         workbook,
 
-        `${currentExam}-NominalRoll.xlsx`
+        `${currentExam || "Exam"}-NominalRoll.xlsx`
 
     );
 
-});
-/* ==========================================
-   SAMPLE EXCEL
-========================================== */
+}
 
-downloadSampleBtn.addEventListener("click",()=>{
 
-    const sample=[
+// ==========================================
+// Download Sample Excel
+// ==========================================
+
+function downloadSample() {
+
+    const sample = [
 
         {
 
-            "Register No":"BCA24001",
+            "Register No":
+                "BCA24001",
 
-            "Student Name":"Rahul",
+            "Student Name":
+                "Rahul",
 
-            "Department":"BCA",
+            "Department":
+                "BCA",
 
-            "Semester":"4"
+            "Semester":
+                "4"
 
         },
 
         {
 
-            "Register No":"BCOM24001",
+            "Register No":
+                "BCOM24001",
 
-            "Student Name":"Aisha",
+            "Student Name":
+                "Aisha",
 
-            "Department":"BCom",
+            "Department":
+                "BCom",
 
-            "Semester":"4"
+            "Semester":
+                "4"
 
         }
 
     ];
 
-    const sheet=
 
-    XLSX.utils.json_to_sheet(sample);
+    const sheet =
+        XLSX.utils.json_to_sheet(
+            sample
+        );
 
-    const workbook=
 
-    XLSX.utils.book_new();
+    const workbook =
+        XLSX.utils.book_new();
+
 
     XLSX.utils.book_append_sheet(
 
@@ -794,6 +1293,7 @@ downloadSampleBtn.addEventListener("click",()=>{
 
     );
 
+
     XLSX.writeFile(
 
         workbook,
@@ -802,4 +1302,4 @@ downloadSampleBtn.addEventListener("click",()=>{
 
     );
 
-});
+}

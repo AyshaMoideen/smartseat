@@ -107,146 +107,186 @@ Clear All
      Create Exam Form
 ========================================== -->
 
+<!-- ==========================================
+     Create Exam Form
+========================================== -->
+
 <div class="form-card">
 
-<h4>
+    <h4>
+        <i class="bi bi-journal-plus"></i>
+        Create Examination
+    </h4>
 
-<i class="bi bi-journal-plus"></i>
+    <hr>
 
-Create Examination
+    <div class="row">
 
-</h4>
+        <!-- Exam Name -->
+        <div class="col-md-6 mb-3">
 
-<hr>
+            <label class="form-label">
+                Exam Name
+            </label>
 
-<div class="row">
+            <input
+                type="text"
+                id="examName"
+                class="form-control"
+                placeholder="Internal Examination">
 
-<div class="col-md-6 mb-3">
+        </div>
 
-<label>
 
-Exam Name
+        <!-- Subject Code -->
+        <div class="col-md-6 mb-3">
 
-</label>
+            <label class="form-label">
+                Subject Code
+            </label>
 
-<input
+            <input
+                type="text"
+                id="subjectCode"
+                class="form-control"
+                placeholder="Example: CS101">
 
-type="text"
+        </div>
 
-id="examName"
 
-class="form-control"
+        <!-- Subject Name -->
+        <div class="col-md-6 mb-3">
 
-placeholder="Internal Examination">
+            <label class="form-label">
+                Subject Name
+            </label>
+
+            <input
+                type="text"
+                id="subjectName"
+                class="form-control"
+                placeholder="Example: Computer Science">
+
+        </div>
+
+
+        <!-- Semester -->
+        <div class="col-md-6 mb-3">
+
+            <label class="form-label">
+                Semester
+            </label>
+
+            <select
+                id="examSemester"
+                class="form-select">
+
+                <option value="">
+                    Select Semester
+                </option>
+
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+
+            </select>
+
+        </div>
+
+
+        <!-- Session -->
+        <div class="col-md-6 mb-3">
+
+            <label class="form-label">
+                Session
+            </label>
+
+            <select
+                id="session"
+                class="form-select">
+
+                <option value="">
+                    Select Session
+                </option>
+
+                <option value="Morning">
+                    Morning
+                </option>
+
+                <option value="Afternoon">
+                    Afternoon
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <!-- Date -->
+        <div class="col-md-6 mb-3">
+
+            <label class="form-label">
+                Date
+            </label>
+
+            <input
+                type="date"
+                id="examDate"
+                class="form-control">
+
+        </div>
+
+
+        <!-- Start Time -->
+        <div class="col-md-6 mb-3">
+
+            <label class="form-label">
+                Start Time
+            </label>
+
+            <input
+                type="time"
+                id="startTime"
+                class="form-control">
+
+        </div>
+
+
+        <!-- End Time -->
+        <div class="col-md-6 mb-3">
+
+            <label class="form-label">
+                End Time
+            </label>
+
+            <input
+                type="time"
+                id="endTime"
+                class="form-control">
+
+        </div>
+
+    </div>
+
+
+    <div class="text-end mt-3">
+
+        <button
+            id="saveExamBtn"
+            class="btn btn-primary">
+
+            <i class="bi bi-check-circle-fill"></i>
+
+            Save Examination
+
+        </button>
+
+    </div>
 
 </div>
-
-<div class="col-md-6 mb-3">
-
-<label>
-
-Semester
-
-</label>
-
-<select
-
-id="examSemester"
-
-class="form-select">
-
-<option value="">Select Semester</option>
-
-<option>1</option>
-
-<option>2</option>
-
-<option>3</option>
-
-<option>4</option>
-
-<option>5</option>
-
-<option>6</option>
-
-</select>
-
-</div>
-
-<div class="col-md-6 mb-3">
-
-<label>
-
-Date
-
-</label>
-
-<input
-
-type="date"
-
-id="examDate"
-
-class="form-control">
-
-</div>
-
-<div class="col-md-6 mb-3">
-
-<label>
-
-Start Time
-
-</label>
-
-<input
-
-type="time"
-
-id="startTime"
-
-class="form-control">
-
-</div>
-
-<div class="col-md-6 mb-3">
-
-<label>
-
-End Time
-
-</label>
-
-<input
-
-type="time"
-
-id="endTime"
-
-class="form-control">
-
-</div>
-
-</div>
-
-<div class="text-end mt-3">
-
-<button
-
-id="saveExamBtn"
-
-class="btn btn-primary">
-
-<i class="bi bi-check-circle-fill"></i>
-
-Save Examination
-
-</button>
-
-</div>
-
-</div>
-
 <!-- ==========================================
      Search
 ========================================== -->
@@ -435,10 +475,6 @@ Clear All
 <script src="../js/alert-manager.js"></script>
 
 <script src="../js/create-exam.js"></script>
-
-</body>
-
-</html>
 
 </body>
 

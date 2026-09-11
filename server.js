@@ -11,6 +11,7 @@ const studentRoutes = require("./backend/routes/studentRoutes");
 const roomRoutes = require("./backend/routes/roomRoutes");
 const examRoutes = require("./backend/routes/examRoutes");
 const batchRoutes = require("./backend/routes/batchRoutes");
+const nominalRollRoutes = require("./backend/routes/nominalRollRoutes");
 
 dotenv.config();
 
@@ -27,6 +28,7 @@ app.use("/api/students", studentRoutes);
 app.use("/api/rooms", roomRoutes);
 app.use("/api/exams", examRoutes);
 app.use("/api/batches", batchRoutes);
+app.use("/api/nominal-rolls",nominalRollRoutes);
 
 // Serve Frontend
 app.use(express.static(path.join(__dirname, "frontend")));
