@@ -1,51 +1,64 @@
 const express = require("express");
 
-const router = express.Router();
+const router =
+    express.Router();
 
 const {
 
-    importNominalRoll,
-
     getNominalRoll,
+    saveNominalRoll,
+    deleteStudent,
+    clearNominalRoll
 
-    deleteNominalStudent
-
-} = require("../controllers/nominalRollController");
+} =
+    require("../controllers/nominalRollController");
 
 const protect =
     require("../middleware/authMiddleware");
 
-// =======================================
-// Protect all nominal roll routes
-// =======================================
 
-router.use(protect);
-
-// =======================================
-// Import students
-// =======================================
-
-router.post(
-    "/import",
-    importNominalRoll
-);
-
-// =======================================
-// Get nominal roll
-// =======================================
+// ==========================================
+// GET NOMINAL ROLL
+// ==========================================
 
 router.get(
-    "/",
+    "/:examId",
+    protect,
     getNominalRoll
 );
 
-// =======================================
-// Delete student
-// =======================================
+
+// ==========================================
+// SAVE NOMINAL ROLL
+// ==========================================
+
+router.post(
+    "/",
+    protect,
+    saveNominalRoll
+);
+
+
+// ==========================================
+// DELETE STUDENT
+// ==========================================
 
 router.delete(
-    "/:id",
-    deleteNominalStudent
+    "/:examId/student/:regNo",
+    protect,
+    deleteStudent
 );
+
+
+// ==========================================
+// CLEAR ROLL
+// ==========================================
+
+router.delete(
+    "/:examId",
+    protect,
+    clearNominalRoll
+);
+
 
 module.exports = router;

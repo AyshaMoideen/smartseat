@@ -57,26 +57,25 @@ if(pageTitle){
 
     const titles = {
 
-        "dashboard.html":"Dashboard",
+    "dashboard.html": "Dashboard",
 
-        "students.html":"Students",
+    "students.html": "Students",
 
-        "rooms.html":"Rooms",
+    "create-exam.html": "Create Exam",
 
-        "create-exam.html":"Create Exam",
-  
-        "seating-generator.html":"Seating",
+    "nominal-roll.html": "Additional Entries",
 
-        "nominal-roll.html": "Nominal Roll",
+    "rooms.html": "Rooms",
 
-        "reports.html":"Reports",
+    "seating-generator.html": "Seating Generator",
 
-        "teacher-profile.html":"Profile",
+    "reports.html": "Reports",
 
-        "teacher-settings.html":"Settings"
+    "teacher-profile.html": "Teacher Profile",
 
-        
-    };
+    "teacher-settings.html": "Account Settings"
+
+};
 
     pageTitle.textContent =
     titles[file] || "SmartSeat";
@@ -121,29 +120,29 @@ function initializeNavigation(){
 
         item.onclick=()=>{
 
-            const routes={
+            const routes = {
 
-                dashboard:"dashboard.html",
+    dashboard: "dashboard.html",
 
-                students:"students.html",
+    students: "students.html",
 
-                rooms:"rooms.html",
+    createExam: "create-exam.html",
 
-                createExam:"create-exam.html",
+    additionalEntries: "nominal-roll.html",
 
-                nominalRoll: "nominal-roll.html",
+    rooms: "rooms.html",
 
-                seating:"seating-generator.html",
+    seating: "seating-generator.html",
 
-                reports:"reports.html",
+    reports: "reports.html",
 
-                profile:"teacher-profile.html",
+    profile: "teacher-profile.html",
 
-                settings:"teacher-settings.html",
+    settings: "teacher-settings.html",
 
-                changePassword:"change-password.html",
-                
-            };
+    changePassword: "change-password.html"
+
+};
 
             window.location.href=routes[item.dataset.page];
 

@@ -9,7 +9,7 @@ const API_URL = "http://localhost:5000/api/exams";
 let exams = [];
 
 // ==========================================
-// DOM Ready
+// DOM READY
 // ==========================================
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -37,23 +37,40 @@ document.addEventListener("DOMContentLoaded", () => {
     document
         .getElementById("clearExamBtnBottom")
         .addEventListener("click", clearAllExams);
-
 });
 
 
 // ==========================================
-// Get Token
+// TOKEN
 // ==========================================
 
 function getToken() {
-
     return localStorage.getItem("token");
-
 }
 
 
 // ==========================================
-// Load Exams
+// AUTH HEADERS
+// ==========================================
+
+function getHeaders() {
+
+    const token = getToken();
+
+    return {
+        "Content-Type": "application/json",
+
+        ...(token
+            ? {
+                Authorization: `Bearer ${token}`
+            }
+            : {})
+    };
+}
+
+
+// ==========================================
+// LOAD EXAMS
 // ==========================================
 
 async function loadExams() {
@@ -62,26 +79,10 @@ async function loadExams() {
 
     try {
 
-        const token = getToken();
-
         const response = await fetch(API_URL, {
-
             method: "GET",
-
-            headers: {
-
-                "Content-Type": "application/json",
-
-                ...(token
-                    ? {
-                        Authorization: `Bearer ${token}`
-                    }
-                    : {})
-
-            }
-
+            headers: getHeaders()
         });
-
 
         const data = await response.json();
 
@@ -91,7 +92,6 @@ async function loadExams() {
             data
         );
 
-
         if (!response.ok) {
 
             throw new Error(
@@ -99,69 +99,31 @@ async function loadExams() {
                 data.error ||
                 `Failed to load exams: ${response.status}`
             );
-
         }
-
-
-        /*
-         * Backend may return:
-         *
-         * []
-         *
-         * OR
-         *
-         * { exams: [] }
-         *
-         * OR
-         *
-         * { data: [] }
-         *
-         * OR
-         *
-         * { results: [] }
-         */
 
         if (Array.isArray(data)) {
 
             exams = data;
 
-        }
-
-        else if (Array.isArray(data.exams)) {
+        } else if (Array.isArray(data.exams)) {
 
             exams = data.exams;
 
-        }
-
-        else if (Array.isArray(data.data)) {
+        } else if (Array.isArray(data.data)) {
 
             exams = data.data;
 
-        }
-
-        else if (Array.isArray(data.results)) {
+        } else if (Array.isArray(data.results)) {
 
             exams = data.results;
 
-        }
-
-        else {
-
-            console.error(
-                "Unexpected examinations API response:",
-                data
-            );
+        } else {
 
             exams = [];
 
         }
 
-
-        console.log(
-            "Exams loaded:",
-            exams
-        );
-
+        console.log("Exams loaded:", exams);
 
         renderTable(exams);
 
@@ -176,23 +138,22 @@ async function loadExams() {
             error
         );
 
-        Swal.fire(
-            "Error",
-            "Unable to load examinations.",
-            "error"
-        );
-
+        Swal.fire({
+            icon: "error",
+            title: "Unable to Load Exams",
+            text: error.message
+        });
     }
-
 }
 
+
 // ==========================================
-// Save Examination
+// SAVE EXAM
 // ==========================================
+
 async function saveExam() {
 
-    console.log("Save Examination button clicked");
-
+    console.log("Save Examination clicked");
 
     const examName =
         document.getElementById("examName").value.trim();
@@ -219,7 +180,9 @@ async function saveExam() {
         document.getElementById("endTime").value;
 
 
-    // Validation
+    // ======================================
+    // VALIDATION
+    // ======================================
 
     if (!examName) {
 
@@ -232,7 +195,6 @@ async function saveExam() {
         return;
     }
 
-
     if (!subjectCode) {
 
         Swal.fire(
@@ -243,7 +205,6 @@ async function saveExam() {
 
         return;
     }
-
 
     if (!subjectName) {
 
@@ -256,7 +217,6 @@ async function saveExam() {
         return;
     }
 
-
     if (!semester) {
 
         Swal.fire(
@@ -267,7 +227,6 @@ async function saveExam() {
 
         return;
     }
-
 
     if (!session) {
 
@@ -280,7 +239,6 @@ async function saveExam() {
         return;
     }
 
-
     if (!examDate) {
 
         Swal.fire(
@@ -291,7 +249,6 @@ async function saveExam() {
 
         return;
     }
-
 
     if (!startTime) {
 
@@ -304,7 +261,6 @@ async function saveExam() {
         return;
     }
 
-
     if (!endTime) {
 
         Swal.fire(
@@ -315,7 +271,6 @@ async function saveExam() {
 
         return;
     }
-
 
     if (endTime <= startTime) {
 
@@ -329,7 +284,9 @@ async function saveExam() {
     }
 
 
-    // Create examination object
+    // ======================================
+    // EXAM DATA
+    // ======================================
 
     const examData = {
 
@@ -350,36 +307,26 @@ async function saveExam() {
         endTime: endTime,
 
         status: true
-
     };
 
 
     console.log(
-        "Exam data being sent:",
+        "Sending exam data:",
         examData
     );
 
 
-    try {
+    // ======================================
+    // SEND TO MONGODB
+    // ======================================
 
-        const token = getToken();
+    try {
 
         const response = await fetch(API_URL, {
 
             method: "POST",
 
-            headers: {
-
-                "Content-Type": "application/json",
-
-                ...(token
-                    ? {
-                        Authorization:
-                        `Bearer ${token}`
-                    }
-                    : {})
-
-            },
+            headers: getHeaders(),
 
             body: JSON.stringify(examData)
 
@@ -390,7 +337,7 @@ async function saveExam() {
 
 
         console.log(
-            "API response:",
+            "Save API response:",
             response.status,
             data
         );
@@ -413,8 +360,7 @@ async function saveExam() {
 
             title: "Examination Saved",
 
-            text:
-                "Examination created successfully.",
+            text: "Examination created successfully.",
 
             confirmButtonText: "OK"
 
@@ -422,7 +368,6 @@ async function saveExam() {
 
 
         clearForm();
-
 
         await loadExams();
 
@@ -441,20 +386,16 @@ async function saveExam() {
 
             title: "Unable to Save Examination",
 
-            text: error.message,
-
-            confirmButtonText: "OK"
+            text: error.message
 
         });
 
     }
-
 }
 
-    
 
 // ==========================================
-// Clear Form
+// CLEAR FORM
 // ==========================================
 
 function clearForm() {
@@ -474,11 +415,11 @@ function clearForm() {
     document.getElementById("startTime").value = "";
 
     document.getElementById("endTime").value = "";
-
 }
 
+
 // ==========================================
-// Render Examination Table
+// RENDER TABLE
 // ==========================================
 
 function renderTable(data) {
@@ -495,7 +436,8 @@ function renderTable(data) {
 
             <tr>
 
-                <td colspan="6"
+                <td
+                    colspan="6"
                     class="text-center">
 
                     No Exams Created
@@ -507,24 +449,29 @@ function renderTable(data) {
         `;
 
         return;
-
     }
 
 
     data.forEach(exam => {
 
         const date = exam.examDate
-            ? new Date(exam.examDate).toLocaleDateString()
+            ? new Date(
+                exam.examDate
+            ).toLocaleDateString()
             : "-";
 
 
         const time =
-
-            exam.startTime && exam.endTime
+            exam.startTime &&
+            exam.endTime
 
                 ? `${exam.startTime} - ${exam.endTime}`
 
                 : exam.session || "-";
+
+
+        const examId =
+            exam._id || exam.id;
 
 
         table.innerHTML += `
@@ -534,14 +481,25 @@ function renderTable(data) {
                 <td>
 
                     <strong>
-                        ${exam.examName || "-"}
+                        ${escapeHTML(
+                            exam.examName || "-"
+                        )}
                     </strong>
 
                     <br>
 
                     <small>
-                        ${exam.subjectCode || ""}
-                        ${exam.subjectName || ""}
+
+                        ${escapeHTML(
+                            exam.subjectCode || ""
+                        )}
+
+                        -
+
+                        ${escapeHTML(
+                            exam.subjectName || ""
+                        )}
+
                     </small>
 
                 </td>
@@ -579,7 +537,7 @@ function renderTable(data) {
 
                     <button
                         class="btn btn-sm btn-danger"
-                        onclick="deleteExam('${exam._id}')">
+                        onclick="deleteExam('${examId}')">
 
                         <i class="bi bi-trash-fill"></i>
 
@@ -592,12 +550,26 @@ function renderTable(data) {
         `;
 
     });
-
 }
 
 
 // ==========================================
-// Statistics
+// ESCAPE HTML
+// ==========================================
+
+function escapeHTML(value) {
+
+    return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+
+// ==========================================
+// STATISTICS
 // ==========================================
 
 function updateStatistics() {
@@ -609,7 +581,9 @@ function updateStatistics() {
     const todayCount =
         exams.filter(exam => {
 
-            if (!exam.examDate) return false;
+            if (!exam.examDate) {
+                return false;
+            }
 
             return new Date(
                 exam.examDate
@@ -621,7 +595,9 @@ function updateStatistics() {
     const upcoming =
         exams.filter(exam => {
 
-            if (!exam.examDate) return false;
+            if (!exam.examDate) {
+                return false;
+            }
 
             return new Date(
                 exam.examDate
@@ -630,33 +606,33 @@ function updateStatistics() {
         }).length;
 
 
-    // Total
+    const semesters =
+        new Set(
+
+            exams
+                .map(exam => exam.semester)
+                .filter(Boolean)
+
+        );
+
+
+    // ======================================
+    // TOP STATISTICS
+    // ======================================
 
     document.getElementById(
         "totalExams"
     ).textContent = exams.length;
 
 
-    // Today
-
     document.getElementById(
         "todayExams"
     ).textContent = todayCount;
 
 
-    // Upcoming
-
     document.getElementById(
         "upcomingExams"
     ).textContent = upcoming;
-
-
-    // Semesters
-
-    const semesters =
-        new Set(
-            exams.map(exam => exam.semester)
-        );
 
 
     document.getElementById(
@@ -664,7 +640,9 @@ function updateStatistics() {
     ).textContent = semesters.size;
 
 
-    // Summary
+    // ======================================
+    // SUMMARY
+    // ======================================
 
     document.getElementById(
         "summaryTotal"
@@ -684,12 +662,11 @@ function updateStatistics() {
     document.getElementById(
         "summaryDepartments"
     ).textContent = semesters.size;
-
 }
 
 
 // ==========================================
-// Search
+// SEARCH
 // ==========================================
 
 function searchExams() {
@@ -702,41 +679,67 @@ function searchExams() {
             .trim();
 
 
-    const filtered = exams.filter(exam => {
+    const filtered =
+        exams.filter(exam => {
 
-        return (
+            return (
 
-            (exam.examName || "")
+                String(
+                    exam.examName || ""
+                )
                 .toLowerCase()
                 .includes(keyword)
 
-            ||
+                ||
 
-            (exam.subjectCode || "")
+                String(
+                    exam.subjectCode || ""
+                )
                 .toLowerCase()
                 .includes(keyword)
 
-            ||
+                ||
 
-            (exam.subjectName || "")
+                String(
+                    exam.subjectName || ""
+                )
                 .toLowerCase()
                 .includes(keyword)
 
-        );
+                ||
 
-    });
+                String(
+                    exam.semester || ""
+                )
+                .toLowerCase()
+                .includes(keyword)
+
+            );
+
+        });
 
 
     renderTable(filtered);
-
 }
 
 
 // ==========================================
-// Delete Exam
+// DELETE EXAM
 // ==========================================
 
 async function deleteExam(id) {
+
+    if (!id) {
+
+        Swal.fire(
+            "Error",
+            "Invalid examination ID.",
+            "error"
+        );
+
+        return;
+    }
+
 
     const result =
         await Swal.fire({
@@ -757,39 +760,30 @@ async function deleteExam(id) {
 
 
     if (!result.isConfirmed) {
-
         return;
-
     }
 
 
     try {
 
-        const token = getToken();
-
         const response =
-            await fetch(`${API_URL}/${id}`, {
+            await fetch(
+                `${API_URL}/${id}`,
+                {
 
-                method: "DELETE",
+                    method: "DELETE",
 
-                headers: {
-
-                    ...(token
-                        ? {
-                            Authorization:
-                            `Bearer ${token}`
-                        }
-                        : {})
+                    headers: getHeaders()
 
                 }
+            );
 
-            });
+
+        const data =
+            await response.json();
 
 
         if (!response.ok) {
-
-            const data =
-                await response.json();
 
             throw new Error(
                 data.message ||
@@ -799,14 +793,18 @@ async function deleteExam(id) {
         }
 
 
-        await Swal.fire(
-            "Deleted",
-            "Examination deleted successfully.",
-            "success"
-        );
+        await Swal.fire({
+
+            icon: "success",
+
+            title: "Deleted",
+
+            text: "Examination deleted successfully."
+
+        });
 
 
-        loadExams();
+        await loadExams();
 
     }
 
@@ -822,14 +820,12 @@ async function deleteExam(id) {
             error.message,
             "error"
         );
-
     }
-
 }
 
 
 // ==========================================
-// Clear All Exams
+// CLEAR ALL EXAMS
 // ==========================================
 
 async function clearAllExams() {
@@ -843,7 +839,6 @@ async function clearAllExams() {
         );
 
         return;
-
     }
 
 
@@ -867,9 +862,7 @@ async function clearAllExams() {
 
 
     if (!result.isConfirmed) {
-
         return;
-
     }
 
 
@@ -877,19 +870,26 @@ async function clearAllExams() {
 
         for (const exam of exams) {
 
-            await deleteExamDirect(exam._id);
+            const id =
+                exam._id || exam.id;
+
+            await deleteExamDirect(id);
 
         }
 
 
-        await Swal.fire(
-            "Success",
-            "All examinations deleted.",
-            "success"
-        );
+        await Swal.fire({
+
+            icon: "success",
+
+            title: "Success",
+
+            text: "All examinations deleted."
+
+        });
 
 
-        loadExams();
+        await loadExams();
 
     }
 
@@ -902,52 +902,50 @@ async function clearAllExams() {
             "Unable to clear examinations.",
             "error"
         );
-
     }
-
 }
 
 
 // ==========================================
-// Direct Delete
+// DIRECT DELETE
 // ==========================================
 
 async function deleteExamDirect(id) {
 
-    const token = getToken();
-
     const response =
-        await fetch(`${API_URL}/${id}`, {
+        await fetch(
+            `${API_URL}/${id}`,
+            {
 
-            method: "DELETE",
+                method: "DELETE",
 
-            headers: {
-
-                ...(token
-                    ? {
-                        Authorization:
-                        `Bearer ${token}`
-                    }
-                    : {})
+                headers: getHeaders()
 
             }
-
-        });
+        );
 
 
     if (!response.ok) {
 
+        let data = {};
+
+        try {
+            data = await response.json();
+        }
+        catch (error) {
+            // Ignore invalid JSON response
+        }
+
         throw new Error(
+            data.message ||
             "Failed to delete examination."
         );
-
     }
-
 }
 
 
 // ==========================================
-// Export Exams
+// EXPORT EXAMS
 // ==========================================
 
 function exportExams() {
@@ -961,7 +959,6 @@ function exportExams() {
         );
 
         return;
-
     }
 
 
@@ -1003,7 +1000,9 @@ function exportExams() {
             exam.semester || "",
 
             exam.examDate
-                ? exam.examDate.substring(0, 10)
+                ? String(
+                    exam.examDate
+                ).substring(0, 10)
                 : "",
 
             exam.session || "",
@@ -1026,15 +1025,21 @@ function exportExams() {
 
 
     XLSX.utils.book_append_sheet(
+
         workbook,
+
         worksheet,
+
         "Examinations"
+
     );
 
 
     XLSX.writeFile(
-        workbook,
-        "examinations.xlsx"
-    );
 
+        workbook,
+
+        "examinations.xlsx"
+
+    );
 }

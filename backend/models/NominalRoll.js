@@ -1,8 +1,13 @@
 const mongoose = require("mongoose");
 
-const nominalStudentSchema = new mongoose.Schema(
+
+// ==========================================
+// STUDENT SCHEMA
+// ==========================================
+
+const studentSchema = new mongoose.Schema(
     {
-        registerNumber: {
+        regNo: {
             type: String,
             required: true,
             trim: true
@@ -21,8 +26,9 @@ const nominalStudentSchema = new mongoose.Schema(
         },
 
         semester: {
-            type: Number,
-            required: true
+            type: String,
+            required: true,
+            trim: true
         }
     },
     {
@@ -30,9 +36,14 @@ const nominalStudentSchema = new mongoose.Schema(
     }
 );
 
+
+// ==========================================
+// NOMINAL ROLL SCHEMA
+// ==========================================
+
 const nominalRollSchema = new mongoose.Schema(
     {
-        exam: {
+        examId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Exam",
             required: true,
@@ -40,13 +51,8 @@ const nominalRollSchema = new mongoose.Schema(
         },
 
         students: {
-            type: [nominalStudentSchema],
+            type: [studentSchema],
             default: []
-        },
-
-        importedOn: {
-            type: Date,
-            default: Date.now
         }
     },
     {
@@ -54,7 +60,9 @@ const nominalRollSchema = new mongoose.Schema(
     }
 );
 
-module.exports = mongoose.model(
-    "NominalRoll",
-    nominalRollSchema
-);
+
+module.exports =
+    mongoose.model(
+        "NominalRoll",
+        nominalRollSchema
+    );

@@ -6,19 +6,53 @@ const {
 
     addExam,
     getExams,
+    getExamById,
     updateExam,
     deleteExam
 
 } = require("../controllers/examController");
 
-const protect = require("../middleware/authMiddleware");
+const protect =
+    require("../middleware/authMiddleware");
 
-router.post("/", protect, addExam);
 
-router.get("/", protect, getExams);
+// ==========================================
+// EXAMS
+// ==========================================
 
-router.put("/:id", protect, updateExam);
+router.post(
+    "/",
+    protect,
+    addExam
+);
 
-router.delete("/:id", protect, deleteExam);
+
+router.get(
+    "/",
+    protect,
+    getExams
+);
+
+
+router.get(
+    "/:id",
+    protect,
+    getExamById
+);
+
+
+router.put(
+    "/:id",
+    protect,
+    updateExam
+);
+
+
+router.delete(
+    "/:id",
+    protect,
+    deleteExam
+);
+
 
 module.exports = router;

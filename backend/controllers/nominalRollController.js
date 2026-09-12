@@ -1,159 +1,86 @@
-const Student = require("../models/Student");
+const NominalRoll = require("../models/NominalRoll");
 const Exam = require("../models/Exam");
 
-// =======================================
-// IMPORT NOMINAL ROLL
-// =======================================
 
-const importNominalRoll = async (req, res) => {
+// ==========================================
+// GET NOMINAL ROLL FOR EXAM
+// ==========================================
+
+exports.getNominalRoll = async (req, res) => {
 
     try {
 
-        const {
-            examId,
-            students
-        } = req.body;
+        const { examId } = req.params;
 
-        // -----------------------------------
-        // Validate exam
-        // -----------------------------------
 
-        if (!examId) {
-
-            return res.status(400).json({
-
-                success: false,
-                message: "Exam is required."
-
-            });
-
-        }
-
-        if (!students || !Array.isArray(students)) {
-
-            return res.status(400).json({
-
-                success: false,
-                message: "Students data is required."
-
-            });
-
-        }
-
-        // -----------------------------------
         // Check exam
-        // -----------------------------------
+        const exam =
+            await Exam.findById(examId);
 
-        const exam = await Exam.findById(examId);
 
         if (!exam) {
 
             return res.status(404).json({
 
                 success: false,
-                message: "Examination not found."
+
+                message:
+                    "Examination not found."
 
             });
 
         }
 
-        // -----------------------------------
-        // Import students
-        // -----------------------------------
 
-        let imported = 0;
-        let skipped = 0;
+        const roll =
+            await NominalRoll.findOne({
+                examId
+            });
 
-        for (const studentData of students) {
 
-            if (!studentData.registerNumber) {
+        // No roll yet
+        if (!roll) {
 
-                skipped++;
+            return res.json({
 
-                continue;
+                success: true,
 
-            }
+                exam,
 
-            const existingStudent =
-                await Student.findOne({
-
-                    registerNumber:
-                        studentData.registerNumber
-
-                });
-
-            if (existingStudent) {
-
-                skipped++;
-
-                continue;
-
-            }
-
-            await Student.create({
-
-                registerNumber:
-                    studentData.registerNumber,
-
-                name:
-                    studentData.name || "",
-
-                department:
-                    studentData.department || "",
-
-                semester:
-                    Number(studentData.semester) || 0,
-
-                section:
-                    studentData.section || ""
+                students: []
 
             });
 
-            imported++;
-
         }
 
-        // -----------------------------------
-        // Response
-        // -----------------------------------
 
-        res.status(201).json({
+        return res.json({
 
             success: true,
+
+            exam,
+
+            students:
+                roll.students || []
+
+        });
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Get Nominal Roll Error:",
+            error
+        );
+
+
+        return res.status(500).json({
+
+            success: false,
 
             message:
-                "Nominal roll imported successfully.",
-
-            exam: {
-
-                id: exam._id,
-
-                name: exam.examName
-
-            },
-
-            imported,
-
-            skipped,
-
-            total: students.length
-
-        });
-
-    }
-
-    catch (error) {
-
-        console.error(
-            "Import nominal roll error:",
-            error
-        );
-
-        res.status(500).json({
-
-            success: false,
-
-            message: error.message
+                error.message
 
         });
 
@@ -162,86 +89,177 @@ const importNominalRoll = async (req, res) => {
 };
 
 
-// =======================================
-// GET STUDENTS FOR EXAM
-// =======================================
+// ==========================================
+// SAVE / IMPORT STUDENTS
+// ==========================================
 
-const getNominalRoll = async (req, res) => {
+exports.saveNominalRoll = async (req, res) => {
 
     try {
 
-        const students =
-            await Student.find().sort({
+        const { examId, students } =
+            req.body;
 
-                registerNumber: 1
+
+        // ------------------------------
+        // Validate exam
+        // ------------------------------
+
+        if (!examId) {
+
+            return res.status(400).json({
+
+                success: false,
+
+                message:
+                    "Exam ID is required."
 
             });
 
-        res.status(200).json({
-
-            success: true,
-
-            count: students.length,
-
-            students
-
-        });
-
-    }
-
-    catch (error) {
-
-        console.error(
-            "Get nominal roll error:",
-            error
-        );
-
-        res.status(500).json({
-
-            success: false,
-
-            message: error.message
-
-        });
-
-    }
-
-};
+        }
 
 
-// =======================================
-// DELETE STUDENT FROM NOMINAL ROLL
-// =======================================
+        if (!Array.isArray(students)) {
 
-const deleteNominalStudent = async (req, res) => {
+            return res.status(400).json({
 
-    try {
+                success: false,
 
-        const student =
-            await Student.findById(req.params.id);
+                message:
+                    "Students must be an array."
 
-        if (!student) {
+            });
+
+        }
+
+
+        // ------------------------------
+        // Check exam
+        // ------------------------------
+
+        const exam =
+            await Exam.findById(examId);
+
+
+        if (!exam) {
 
             return res.status(404).json({
 
                 success: false,
 
-                message: "Student not found."
+                message:
+                    "Examination not found."
 
             });
 
         }
 
-        await Student.findByIdAndDelete(
-            req.params.id
-        );
 
-        res.status(200).json({
+        // ------------------------------
+        // Clean students
+        // ------------------------------
+
+        const cleanedStudents =
+            students
+                .map(student => ({
+
+                    regNo:
+                        String(
+                            student.regNo || ""
+                        ).trim(),
+
+                    name:
+                        String(
+                            student.name || ""
+                        ).trim(),
+
+                    department:
+                        String(
+                            student.department || ""
+                        ).trim(),
+
+                    semester:
+                        String(
+                            student.semester || ""
+                        ).trim()
+
+                }))
+                .filter(
+                    student =>
+                        student.regNo &&
+                        student.name
+                );
+
+
+        // ------------------------------
+        // Remove duplicate register numbers
+        // ------------------------------
+
+        const uniqueStudents = [];
+
+        const registerNumbers =
+            new Set();
+
+
+        cleanedStudents.forEach(student => {
+
+            const regNo =
+                student.regNo.toLowerCase();
+
+
+            if (
+                !registerNumbers.has(regNo)
+            ) {
+
+                registerNumbers.add(regNo);
+
+                uniqueStudents.push(student);
+
+            }
+
+        });
+
+
+        // ------------------------------
+        // Save / Update
+        // ------------------------------
+
+        const roll =
+            await NominalRoll.findOneAndUpdate(
+
+                { examId },
+
+                {
+                    examId,
+
+                    students:
+                        uniqueStudents
+
+                },
+
+                {
+                    new: true,
+
+                    upsert: true,
+
+                    runValidators: true
+
+                }
+
+            );
+
+
+        return res.json({
 
             success: true,
 
             message:
-                "Student removed from nominal roll."
+                "Nominal roll saved successfully.",
+
+            count:
+                roll.students.length,
+
+            roll
 
         });
 
@@ -250,15 +268,17 @@ const deleteNominalStudent = async (req, res) => {
     catch (error) {
 
         console.error(
-            "Delete nominal student error:",
+            "Save Nominal Roll Error:",
             error
         );
 
-        res.status(500).json({
+
+        return res.status(500).json({
 
             success: false,
 
-            message: error.message
+            message:
+                error.message
 
         });
 
@@ -267,16 +287,172 @@ const deleteNominalStudent = async (req, res) => {
 };
 
 
-// =======================================
-// EXPORT
-// =======================================
+// ==========================================
+// DELETE STUDENT
+// ==========================================
 
-module.exports = {
+exports.deleteStudent = async (req, res) => {
 
-    importNominalRoll,
+    try {
 
-    getNominalRoll,
+        const {
+            examId,
+            regNo
+        } = req.params;
 
-    deleteNominalStudent
+
+        const roll =
+            await NominalRoll.findOne({
+                examId
+            });
+
+
+        if (!roll) {
+
+            return res.status(404).json({
+
+                success: false,
+
+                message:
+                    "Nominal roll not found."
+
+            });
+
+        }
+
+
+        const oldLength =
+            roll.students.length;
+
+
+        roll.students =
+            roll.students.filter(
+                student =>
+                    student.regNo !== regNo
+            );
+
+
+        if (
+            roll.students.length === oldLength
+        ) {
+
+            return res.status(404).json({
+
+                success: false,
+
+                message:
+                    "Student not found."
+
+            });
+
+        }
+
+
+        await roll.save();
+
+
+        return res.json({
+
+            success: true,
+
+            message:
+                "Student deleted successfully.",
+
+            students:
+                roll.students
+
+        });
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Delete Student Error:",
+            error
+        );
+
+
+        return res.status(500).json({
+
+            success: false,
+
+            message:
+                error.message
+
+        });
+
+    }
+
+};
+
+
+// ==========================================
+// CLEAR NOMINAL ROLL
+// ==========================================
+
+exports.clearNominalRoll = async (req, res) => {
+
+    try {
+
+        const { examId } =
+            req.params;
+
+
+        const roll =
+            await NominalRoll.findOne({
+                examId
+            });
+
+
+        if (!roll) {
+
+            return res.status(404).json({
+
+                success: false,
+
+                message:
+                    "Nominal roll not found."
+
+            });
+
+        }
+
+
+        roll.students = [];
+
+
+        await roll.save();
+
+
+        return res.json({
+
+            success: true,
+
+            message:
+                "Nominal roll cleared successfully."
+
+        });
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Clear Nominal Roll Error:",
+            error
+        );
+
+
+        return res.status(500).json({
+
+            success: false,
+
+            message:
+                error.message
+
+        });
+
+    }
 
 };

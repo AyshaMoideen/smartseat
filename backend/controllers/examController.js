@@ -1,29 +1,145 @@
 const Exam = require("../models/Exam");
 
-/* ==========================
-   Add Exam
-========================== */
+
+// ==========================================
+// ADD EXAM
+// ==========================================
 
 exports.addExam = async (req, res) => {
 
     try {
 
-        const exam = await Exam.create(req.body);
+        const {
+            examName,
+            subjectCode,
+            subjectName,
+            semester,
+            examDate,
+            session,
+            startTime,
+            endTime,
+            departments,
+            duration,
+            status
+        } = req.body;
 
-        res.status(201).json({
+
+        // ------------------------------
+        // Required validation
+        // ------------------------------
+
+        if (
+            !examName ||
+            !subjectCode ||
+            !subjectName ||
+            !semester ||
+            !examDate ||
+            !session ||
+            !startTime ||
+            !endTime
+        ) {
+
+            return res.status(400).json({
+
+                success: false,
+
+                message:
+                    "All required examination fields must be provided."
+
+            });
+
+        }
+
+
+        // ------------------------------
+        // Validate time
+        // ------------------------------
+
+        if (endTime <= startTime) {
+
+            return res.status(400).json({
+
+                success: false,
+
+                message:
+                    "End time must be after start time."
+
+            });
+
+        }
+
+
+        // ------------------------------
+        // Create exam
+        // ------------------------------
+
+        const exam =
+            await Exam.create({
+
+                examName:
+                    examName.trim(),
+
+                subjectCode:
+                    subjectCode.trim().toUpperCase(),
+
+                subjectName:
+                    subjectName.trim(),
+
+                semester:
+                    Number(semester),
+
+                departments:
+                    Array.isArray(departments)
+                        ? departments
+                        : [],
+
+                examDate:
+                    new Date(examDate),
+
+                session,
+
+                startTime,
+
+                endTime,
+
+                duration:
+                    duration || "3 Hours",
+
+                status:
+                    status !== undefined
+                        ? status
+                        : true
+
+            });
+
+
+        return res.status(201).json({
 
             success: true,
-            message: "Exam created successfully.",
+
+            message:
+                "Exam created successfully.",
+
             exam
 
         });
 
-    } catch (error) {
+    }
 
-        res.status(500).json({
+    catch (error) {
+
+        console.error(
+            "Add Exam Error:",
+            error
+        );
+
+
+        return res.status(500).json({
 
             success: false,
-            message: error.message
+
+            message:
+                error.message
 
         });
 
@@ -31,33 +147,50 @@ exports.addExam = async (req, res) => {
 
 };
 
-/* ==========================
-   Get Exams
-========================== */
+
+// ==========================================
+// GET ALL EXAMS
+// ==========================================
 
 exports.getExams = async (req, res) => {
 
     try {
 
-        const exams = await Exam.find().sort({
+        const exams =
+            await Exam.find()
+                .sort({
+                    examDate: 1,
+                    startTime: 1
+                });
 
-            examDate: 1
 
-        });
-
-        res.json({
+        return res.json({
 
             success: true,
+
+            count:
+                exams.length,
+
             exams
 
         });
 
-    } catch (error) {
+    }
 
-        res.status(500).json({
+    catch (error) {
+
+        console.error(
+            "Get Exams Error:",
+            error
+        );
+
+
+        return res.status(500).json({
 
             success: false,
-            message: error.message
+
+            message:
+                error.message
 
         });
 
@@ -65,38 +198,212 @@ exports.getExams = async (req, res) => {
 
 };
 
-/* ==========================
-   Update Exam
-========================== */
+
+// ==========================================
+// GET SINGLE EXAM
+// ==========================================
+
+exports.getExamById = async (req, res) => {
+
+    try {
+
+        const exam =
+            await Exam.findById(
+                req.params.id
+            );
+
+
+        if (!exam) {
+
+            return res.status(404).json({
+
+                success: false,
+
+                message:
+                    "Examination not found."
+
+            });
+
+        }
+
+
+        return res.json({
+
+            success: true,
+
+            exam
+
+        });
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Get Exam Error:",
+            error
+        );
+
+
+        return res.status(500).json({
+
+            success: false,
+
+            message:
+                error.message
+
+        });
+
+    }
+
+};
+
+
+// ==========================================
+// UPDATE EXAM
+// ==========================================
 
 exports.updateExam = async (req, res) => {
 
     try {
 
-        const exam = await Exam.findByIdAndUpdate(
+        const exam =
+            await Exam.findById(
+                req.params.id
+            );
 
-            req.params.id,
 
-            req.body,
+        if (!exam) {
 
-            { new: true }
+            return res.status(404).json({
 
-        );
+                success: false,
 
-        res.json({
+                message:
+                    "Examination not found."
+
+            });
+
+        }
+
+
+        // ------------------------------
+        // Update fields
+        // ------------------------------
+
+        const allowedFields = [
+
+            "examName",
+            "subjectCode",
+            "subjectName",
+            "semester",
+            "departments",
+            "examDate",
+            "session",
+            "startTime",
+            "endTime",
+            "duration",
+            "status"
+
+        ];
+
+
+        allowedFields.forEach(field => {
+
+            if (
+                req.body[field] !== undefined
+            ) {
+
+                exam[field] =
+                    req.body[field];
+
+            }
+
+        });
+
+
+        // ------------------------------
+        // Normalize values
+        // ------------------------------
+
+        if (exam.examName) {
+
+            exam.examName =
+                exam.examName.trim();
+
+        }
+
+
+        if (exam.subjectCode) {
+
+            exam.subjectCode =
+                exam.subjectCode
+                    .trim()
+                    .toUpperCase();
+
+        }
+
+
+        if (exam.subjectName) {
+
+            exam.subjectName =
+                exam.subjectName.trim();
+
+        }
+
+
+        // ------------------------------
+        // Validate time
+        // ------------------------------
+
+        if (
+            exam.startTime &&
+            exam.endTime &&
+            exam.endTime <= exam.startTime
+        ) {
+
+            return res.status(400).json({
+
+                success: false,
+
+                message:
+                    "End time must be after start time."
+
+            });
+
+        }
+
+
+        await exam.save();
+
+
+        return res.json({
 
             success: true,
-            message: "Exam updated successfully.",
+
+            message:
+                "Exam updated successfully.",
+
             exam
 
         });
 
-    } catch (error) {
+    }
 
-        res.status(500).json({
+    catch (error) {
+
+        console.error(
+            "Update Exam Error:",
+            error
+        );
+
+
+        return res.status(500).json({
 
             success: false,
-            message: error.message
+
+            message:
+                error.message
 
         });
 
@@ -104,29 +411,65 @@ exports.updateExam = async (req, res) => {
 
 };
 
-/* ==========================
-   Delete Exam
-========================== */
+
+// ==========================================
+// DELETE EXAM
+// ==========================================
 
 exports.deleteExam = async (req, res) => {
 
     try {
 
-        await Exam.findByIdAndDelete(req.params.id);
+        const exam =
+            await Exam.findById(
+                req.params.id
+            );
 
-        res.json({
+
+        if (!exam) {
+
+            return res.status(404).json({
+
+                success: false,
+
+                message:
+                    "Examination not found."
+
+            });
+
+        }
+
+
+        await Exam.findByIdAndDelete(
+            req.params.id
+        );
+
+
+        return res.json({
 
             success: true,
-            message: "Exam deleted successfully."
+
+            message:
+                "Exam deleted successfully."
 
         });
 
-    } catch (error) {
+    }
 
-        res.status(500).json({
+    catch (error) {
+
+        console.error(
+            "Delete Exam Error:",
+            error
+        );
+
+
+        return res.status(500).json({
 
             success: false,
-            message: error.message
+
+            message:
+                error.message
 
         });
 
