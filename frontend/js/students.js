@@ -34,6 +34,9 @@ const saveStudentBtn =
 const searchStudent =
     document.getElementById("searchStudent");
 
+const departmentFilter =
+document.getElementById("departmentFilter");
+
 const excelFile =
     document.getElementById("excelFile");
 
@@ -338,12 +341,14 @@ function safe(value) {
 
 }
 
-
-/* =========================================================
-   RENDER STUDENTS
-   ========================================================= */
+// ==========================================
+// Render Students
+// ==========================================
 
 function renderStudents(data = students) {
+
+    const studentTable =
+        document.getElementById("studentTable");
 
     if (!studentTable) {
         return;
@@ -352,17 +357,26 @@ function renderStudents(data = students) {
     studentTable.innerHTML = "";
 
 
-    if (!data.length) {
+    // ==========================================
+    // No Students
+    // ==========================================
+
+    if (!data || data.length === 0) {
 
         studentTable.innerHTML = `
+
             <tr>
+
                 <td
-                    colspan="5"
-                    class="text-center py-4"
-                >
+                    colspan="6"
+                    class="text-center">
+
                     No Students Found
+
                 </td>
+
             </tr>
+
         `;
 
         updateStatistics();
@@ -371,57 +385,96 @@ function renderStudents(data = students) {
     }
 
 
-    data.forEach(student => {
+    // ==========================================
+    // Student Rows
+    // ==========================================
 
-        const realIndex =
-            students.findIndex(
-                item =>
-                    item._id === student._id
-            );
+    data.forEach((student, index) => {
+
+        // Find original student index
+        // This keeps Edit/Delete working
+        // even after filtering.
+
+        const originalIndex =
+            students.indexOf(student);
 
 
         studentTable.innerHTML += `
+
             <tr>
 
-                <td>
-                    ${safe(
-                        student.registerNumber
-                    )}
+                <!-- S.NO -->
+
+                <td class="student-sno">
+
+                    ${index + 1}
+
                 </td>
 
-                <td>
-                    ${safe(student.name)}
-                </td>
+
+                <!-- REGISTER NUMBER -->
 
                 <td>
-                    ${safe(student.department)}
+
+                    ${student.registerNumber || "-"}
+
                 </td>
 
-                <td>
-                    ${safe(student.semester)}
-                </td>
+
+                <!-- NAME -->
 
                 <td>
+
+                    ${student.name || "-"}
+
+                </td>
+
+
+                <!-- DEPARTMENT -->
+
+                <td>
+
+                    ${student.department || "-"}
+
+                </td>
+
+
+                <!-- SEMESTER -->
+
+                <td>
+
+                    ${student.semester || "-"}
+
+                </td>
+
+
+                <!-- ACTION -->
+
+                <td class="student-actions">
 
                     <button
-                        class="btn btn-warning btn-sm me-2"
-                        onclick="editStudent(${realIndex})"
-                        title="Edit Student"
-                    >
+                        class="btn btn-warning btn-sm"
+                        onclick="editStudent(${originalIndex})"
+                        title="Edit Student">
+
                         <i class="bi bi-pencil-fill"></i>
+
                     </button>
+
 
                     <button
                         class="btn btn-danger btn-sm"
-                        onclick="deleteStudent(${realIndex})"
-                        title="Delete Student"
-                    >
+                        onclick="deleteStudent(${originalIndex})"
+                        title="Delete Student">
+
                         <i class="bi bi-trash-fill"></i>
+
                     </button>
 
                 </td>
 
             </tr>
+
         `;
 
     });
@@ -430,7 +483,6 @@ function renderStudents(data = students) {
     updateStatistics();
 
 }
-
 
 /* =========================================================
    GENERATE REGISTER NUMBER
@@ -1172,88 +1224,123 @@ window.deleteStudent = async function(index) {
 
 };
 
+/* ==========================================
+   SEARCH + DEPARTMENT FILTER
+========================================== */
 
-/* =========================================================
-   SEARCH
-   ========================================================= */
+function applyStudentFilters(){
 
-if (searchStudent) {
+    const searchValue =
+        searchStudent.value
+            .trim()
+            .toLowerCase();
 
-    searchStudent.addEventListener(
-        "input",
-        () => {
-
-            const value =
-                searchStudent.value
-                    .trim()
-                    .toLowerCase();
-
-
-            if (!value) {
-
-                renderStudents();
-
-                return;
-            }
+    const departmentValue =
+        departmentFilter.value
+            .trim()
+            .toLowerCase();
 
 
-            const filtered =
-                students.filter(
-                    student => {
+    const filtered =
+        students.filter(student => {
 
-                        const registerNumber =
-                            safe(
-                                student.registerNumber
-                            )
-                            .toLowerCase();
+            const registerNumber =
+                String(
+                    student.registerNumber || ""
+                )
+                .toLowerCase();
 
+            const name =
+                String(
+                    student.name || ""
+                )
+                .toLowerCase();
 
-                        const name =
-                            safe(
-                                student.name
-                            )
-                            .toLowerCase();
+            const department =
+                String(
+                    student.department || ""
+                )
+                .toLowerCase();
 
-
-                        const department =
-                            safe(
-                                student.department
-                            )
-                            .toLowerCase();
-
-
-                        const semester =
-                            safe(
-                                student.semester
-                            )
-                            .toLowerCase();
-
-
-                        return (
-                            registerNumber.includes(
-                                value
-                            ) ||
-
-                            name.includes(
-                                value
-                            ) ||
-
-                            department.includes(
-                                value
-                            ) ||
-
-                            semester.includes(
-                                value
-                            )
-                        );
-
-                    }
+            const semester =
+                String(
+                    student.semester || ""
                 );
 
 
-            renderStudents(filtered);
+            /* ==========================
+               SEARCH MATCH
+            ========================== */
 
-        }
+            const matchesSearch =
+
+                searchValue === "" ||
+
+                registerNumber.includes(
+                    searchValue
+                ) ||
+
+                name.includes(
+                    searchValue
+                ) ||
+
+                department.includes(
+                    searchValue
+                ) ||
+
+                semester.includes(
+                    searchValue
+                );
+
+
+            /* ==========================
+               DEPARTMENT MATCH
+            ========================== */
+
+            const matchesDepartment =
+
+                departmentValue === "" ||
+
+                department ===
+                    departmentValue;
+
+
+            return (
+                matchesSearch &&
+                matchesDepartment
+            );
+
+        });
+
+
+    renderStudents(filtered);
+
+}
+
+
+/* ==========================================
+   SEARCH EVENT
+========================================== */
+
+if(searchStudent){
+
+    searchStudent.addEventListener(
+        "input",
+        applyStudentFilters
+    );
+
+}
+
+
+/* ==========================================
+   DEPARTMENT FILTER EVENT
+========================================== */
+
+if(departmentFilter){
+
+    departmentFilter.addEventListener(
+        "change",
+        applyStudentFilters
     );
 
 }

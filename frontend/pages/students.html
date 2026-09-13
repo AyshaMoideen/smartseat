@@ -315,15 +315,68 @@ Export Students
 
 </div>
 
-<!-- Search -->
+<!-- ==========================================
+     SEARCH + DEPARTMENT FILTER
+========================================== -->
 
-<div class="search-box">
+<div class="student-filter-row">
 
-<input
-type="text"
-id="searchStudent"
-class="form-control"
-placeholder="Search by Register Number or Name">
+    <!-- Search -->
+
+    <div class="student-search-wrapper">
+
+        <div class="search-box">
+
+            <input
+                type="text"
+                id="searchStudent"
+                class="form-control"
+                placeholder="Search by Register Number, Name or Department">
+
+        </div>
+
+    </div>
+
+
+    <!-- Department -->
+
+    <div class="student-department-wrapper">
+
+        <select
+            id="departmentFilter"
+            class="form-select">
+
+            <option value="">
+                All Departments
+            </option>
+
+            <option value="BA.ENG">
+                BA.ENG
+            </option>
+
+            <option value="BCA">
+                BCA
+            </option>
+
+            <option value="BBA.AVH">
+                BBA.AVH
+            </option>
+
+            <option value="BBA.TTM">
+                BBA.TTM
+            </option>
+
+            <option value="BCOM.CA">
+                BCOM.CA
+            </option>
+
+            <option value="BCOM.CP">
+                BCOM.CP
+            </option>
+
+        </select>
+
+    </div>
 
 </div>
 
@@ -336,21 +389,12 @@ placeholder="Search by Register Number or Name">
 <thead>
 
 <tr>
-
-<th>Register No</th>
-
-<th>Name</th>
-
-<th>Department</th>
-
-<th>Semester</th>
-
-<th width="150">
-
-Action
-
-</th>
-
+    <th>S.No.</th>
+    <th>Register No</th>
+    <th>Name</th>
+    <th>Department</th>
+    <th>Semester</th>
+    <th>Action</th>
 </tr>
 
 </thead>

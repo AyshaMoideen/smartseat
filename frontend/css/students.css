@@ -159,6 +159,50 @@ body{
     box-shadow:0 0 0 4px rgba(29,142,247,.15);
 }
 
+/* ==========================================
+   DEPARTMENT FILTER
+========================================== */
+
+#departmentFilter{
+
+    height:55px;
+
+    border-radius:16px;
+
+    border:1px solid #E5E7EB;
+
+    padding:0 18px;
+
+    font-size:16px;
+
+    font-weight:500;
+
+    color:#334155;
+
+    background:white;
+
+    cursor:pointer;
+
+    transition:.3s;
+
+}
+
+#departmentFilter:focus{
+
+    border-color:#1D8EF7;
+
+    box-shadow:
+        0 0 0 4px
+        rgba(29,142,247,.15);
+
+}
+
+#departmentFilter:hover{
+
+    border-color:#1D8EF7;
+
+}
+
 .table{
     margin-top:25px;
     border-collapse:separate;
@@ -221,6 +265,76 @@ body{
 
 }
 
+/* ==========================================
+   SEARCH + DEPARTMENT FILTER
+========================================== */
+
+.student-filter-row {
+    display: flex;
+    align-items: stretch;
+    gap: 20px;
+    margin: 35px 0;
+}
+
+.student-search-wrapper {
+    flex: 2;
+}
+
+.student-department-wrapper {
+    flex: 1;
+}
+
+.student-search-wrapper .search-box {
+    margin: 0;
+}
+
+.student-search-wrapper input,
+.student-department-wrapper select {
+    width: 100%;
+    height: 55px;
+    border-radius: 16px;
+    box-sizing: border-box;
+}
+
+.student-search-wrapper input {
+    padding: 0 20px;
+    border: 1px solid #ddd;
+    font-size: 16px;
+}
+
+.student-department-wrapper select {
+    padding: 0 18px;
+    border: 1px solid #ddd;
+    font-size: 16px;
+    font-weight: 500;
+    color: #334155;
+    background-color: #fff;
+    cursor: pointer;
+}
+
+.student-search-wrapper input:focus,
+.student-department-wrapper select:focus {
+    border-color: #1D8EF7;
+    box-shadow: 0 0 0 4px rgba(29,142,247,.15);
+    outline: none;
+}
+
+
+/* Mobile */
+
+@media (max-width: 768px) {
+
+    .student-filter-row {
+        flex-direction: column;
+    }
+
+    .student-search-wrapper,
+    .student-department-wrapper {
+        width: 100%;
+    }
+
+}
+
 @media(max-width:992px){
 
     .main{
@@ -240,5 +354,70 @@ body{
         align-items:flex-start;
 
     }
+
+}
+/* ==========================================
+   STUDENT TABLE - S.NO + ACTION
+========================================== */
+
+.student-sno {
+
+    width: 80px;
+
+    text-align: center;
+
+    font-weight: 600;
+
+    color: #0B2D5C;
+
+}
+
+
+.student-actions {
+
+    white-space: nowrap;
+
+    text-align: center;
+
+}
+
+
+.student-actions .btn {
+
+    width: 44px;
+
+    height: 44px;
+
+    border-radius: 50%;
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    margin: 0 4px;
+
+}
+
+
+.student-actions .btn-warning {
+
+    background: #FFC107;
+
+    border: none;
+
+    color: #000;
+
+}
+
+
+.student-actions .btn-danger {
+
+    background: #EF3340;
+
+    border: none;
+
+    color: #fff;
 
 }
