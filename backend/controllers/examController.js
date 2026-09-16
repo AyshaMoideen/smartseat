@@ -2,6 +2,248 @@ const Exam = require("../models/Exam");
 
 
 // ==========================================
+// NORMALIZE SUBJECT NAME
+// ==========================================
+
+function normalizeSubjectName(name) {
+
+    return String(name || "")
+        .trim()
+        .replace(/\s+/g, " ")
+        .toLowerCase();
+
+}
+
+
+// ==========================================
+// BUILD SUBJECTS
+// ==========================================
+//
+// Frontend sends:
+//
+// [
+//   {
+//      department: "BCA",
+//      subjectCode: "CS501",
+//      subjectName: "Data Structures"
+//   },
+//   {
+//      department: "BBA TTM",
+//      subjectCode: "",
+//      subjectName: "Marketing"
+//   },
+//   {
+//      department: "BBA AH",
+//      subjectCode: "",
+//      subjectName: "Marketing"
+//   }
+// ]
+//
+// Backend converts it into:
+//
+// [
+//   {
+//      subjectCode: "CS501",
+//      subjectName: "Data Structures",
+//      departments: ["BCA"]
+//   },
+//   {
+//      subjectCode: "",
+//      subjectName: "Marketing",
+//      departments: ["BBA TTM", "BBA AH"]
+//   }
+// ]
+//
+// ==========================================
+
+function buildSubjects(departmentSubjects) {
+
+    const subjectMap = new Map();
+
+
+    departmentSubjects.forEach(item => {
+
+        const department =
+            String(item.department || "")
+                .trim();
+
+
+        const subjectName =
+            String(item.subjectName || "")
+                .trim()
+                .replace(/\s+/g, " ");
+
+
+        const subjectCode =
+            String(item.subjectCode || "")
+                .trim()
+                .toUpperCase();
+
+
+        const key =
+            normalizeSubjectName(
+                subjectName
+            );
+
+
+        if (!key) {
+            return;
+        }
+
+
+        if (!subjectMap.has(key)) {
+
+            subjectMap.set(
+                key,
+                {
+                    subjectCode,
+                    subjectName,
+                    departments: []
+                }
+            );
+
+        }
+
+
+        const subject =
+            subjectMap.get(key);
+
+
+        // Add department only once
+
+        if (
+            department &&
+            !subject.departments.includes(
+                department
+            )
+        ) {
+
+            subject.departments.push(
+                department
+            );
+
+        }
+
+
+        // If first entry had no code,
+        // use a later available code.
+
+        if (
+            !subject.subjectCode &&
+            subjectCode
+        ) {
+
+            subject.subjectCode =
+                subjectCode;
+
+        }
+
+    });
+
+
+    return Array.from(
+        subjectMap.values()
+    );
+
+}
+
+
+// ==========================================
+// VALIDATE DEPARTMENT SUBJECTS
+// ==========================================
+
+function validateDepartmentSubjects(
+    departmentSubjects
+) {
+
+    if (
+        !Array.isArray(
+            departmentSubjects
+        ) ||
+        departmentSubjects.length === 0
+    ) {
+
+        return {
+            valid: false,
+            message:
+                "Please add at least one department and subject."
+        };
+
+    }
+
+
+    const departments = [];
+
+
+    for (
+        const item
+        of departmentSubjects
+    ) {
+
+        const department =
+            String(
+                item.department || ""
+            ).trim();
+
+
+        const subjectName =
+            String(
+                item.subjectName || ""
+            ).trim();
+
+
+        if (!department) {
+
+            return {
+                valid: false,
+                message:
+                    "Every subject must have a department."
+            };
+
+        }
+
+
+        if (!subjectName) {
+
+            return {
+                valid: false,
+                message:
+                    `Please enter the subject name for ${department}.`
+            };
+
+        }
+
+
+        if (
+            departments.includes(
+                department
+            )
+        ) {
+
+            return {
+                valid: false,
+                message:
+                    `${department} has been added more than once.`
+            };
+
+        }
+
+
+        departments.push(
+            department
+        );
+
+    }
+
+
+    return {
+        valid: true
+    };
+
+}
+
+
+// ==========================================
 // ADD EXAM
 // ==========================================
 
@@ -11,49 +253,108 @@ exports.addExam = async (req, res) => {
 
         const {
             examName,
-            subjectCode,
-            subjectName,
             semester,
             examDate,
             session,
             startTime,
             endTime,
-            departments,
+            subjects,
             duration,
             status
         } = req.body;
 
 
-        // ------------------------------
-        // Required validation
-        // ------------------------------
+        // ----------------------------------
+        // Common Details Validation
+        // ----------------------------------
 
-        if (
-            !examName ||
-            !subjectCode ||
-            !subjectName ||
-            !semester ||
-            !examDate ||
-            !session ||
-            !startTime ||
-            !endTime
-        ) {
+        if (!examName) {
 
             return res.status(400).json({
 
                 success: false,
 
                 message:
-                    "All required examination fields must be provided."
+                    "Exam name is required."
 
             });
 
         }
 
 
-        // ------------------------------
-        // Validate time
-        // ------------------------------
+        if (!semester) {
+
+            return res.status(400).json({
+
+                success: false,
+
+                message:
+                    "Semester is required."
+
+            });
+
+        }
+
+
+        if (!examDate) {
+
+            return res.status(400).json({
+
+                success: false,
+
+                message:
+                    "Exam date is required."
+
+            });
+
+        }
+
+
+        if (!session) {
+
+            return res.status(400).json({
+
+                success: false,
+
+                message:
+                    "Session is required."
+
+            });
+
+        }
+
+
+        if (!startTime) {
+
+            return res.status(400).json({
+
+                success: false,
+
+                message:
+                    "Start time is required."
+
+            });
+
+        }
+
+
+        if (!endTime) {
+
+            return res.status(400).json({
+
+                success: false,
+
+                message:
+                    "End time is required."
+
+            });
+
+        }
+
+
+        // ----------------------------------
+        // Time Validation
+        // ----------------------------------
 
         if (endTime <= startTime) {
 
@@ -69,29 +370,51 @@ exports.addExam = async (req, res) => {
         }
 
 
-        // ------------------------------
-        // Create exam
-        // ------------------------------
+        // ----------------------------------
+        // Validate Subjects
+        // ----------------------------------
+
+        const validation =
+            validateDepartmentSubjects(
+                subjects
+            );
+
+
+        if (!validation.valid) {
+
+            return res.status(400).json({
+
+                success: false,
+
+                message:
+                    validation.message
+
+            });
+
+        }
+
+
+        // ----------------------------------
+        // Build Common Subjects
+        // ----------------------------------
+
+        const finalSubjects =
+            buildSubjects(subjects);
+
+
+        // ----------------------------------
+        // Create Examination
+        // ----------------------------------
 
         const exam =
             await Exam.create({
 
                 examName:
-                    examName.trim(),
-
-                subjectCode:
-                    subjectCode.trim().toUpperCase(),
-
-                subjectName:
-                    subjectName.trim(),
+                    examName
+                        .trim(),
 
                 semester:
                     Number(semester),
-
-                departments:
-                    Array.isArray(departments)
-                        ? departments
-                        : [],
 
                 examDate:
                     new Date(examDate),
@@ -102,8 +425,12 @@ exports.addExam = async (req, res) => {
 
                 endTime,
 
+                subjects:
+                    finalSubjects,
+
                 duration:
-                    duration || "3 Hours",
+                    duration ||
+                    "1 Hour",
 
                 status:
                     status !== undefined
@@ -118,13 +445,14 @@ exports.addExam = async (req, res) => {
             success: true,
 
             message:
-                "Exam created successfully.",
+                "Examination created successfully.",
 
             exam
 
         });
 
     }
+
 
     catch (error) {
 
@@ -176,6 +504,7 @@ exports.getExams = async (req, res) => {
         });
 
     }
+
 
     catch (error) {
 
@@ -237,6 +566,7 @@ exports.getExamById = async (req, res) => {
 
     }
 
+
     catch (error) {
 
         console.error(
@@ -287,74 +617,135 @@ exports.updateExam = async (req, res) => {
         }
 
 
-        // ------------------------------
-        // Update fields
-        // ------------------------------
+        // ----------------------------------
+        // Common Fields
+        // ----------------------------------
 
-        const allowedFields = [
+        if (
+            req.body.examName !== undefined
+        ) {
 
-            "examName",
-            "subjectCode",
-            "subjectName",
-            "semester",
-            "departments",
-            "examDate",
-            "session",
-            "startTime",
-            "endTime",
-            "duration",
-            "status"
+            exam.examName =
+                String(
+                    req.body.examName
+                ).trim();
 
-        ];
+        }
 
 
-        allowedFields.forEach(field => {
+        if (
+            req.body.semester !== undefined
+        ) {
 
-            if (
-                req.body[field] !== undefined
-            ) {
+            exam.semester =
+                Number(
+                    req.body.semester
+                );
 
-                exam[field] =
-                    req.body[field];
+        }
+
+
+        if (
+            req.body.examDate !== undefined
+        ) {
+
+            exam.examDate =
+                new Date(
+                    req.body.examDate
+                );
+
+        }
+
+
+        if (
+            req.body.session !== undefined
+        ) {
+
+            exam.session =
+                req.body.session;
+
+        }
+
+
+        if (
+            req.body.startTime !== undefined
+        ) {
+
+            exam.startTime =
+                req.body.startTime;
+
+        }
+
+
+        if (
+            req.body.endTime !== undefined
+        ) {
+
+            exam.endTime =
+                req.body.endTime;
+
+        }
+
+
+        if (
+            req.body.duration !== undefined
+        ) {
+
+            exam.duration =
+                req.body.duration;
+
+        }
+
+
+        if (
+            req.body.status !== undefined
+        ) {
+
+            exam.status =
+                req.body.status;
+
+        }
+
+
+        // ----------------------------------
+        // Update Subjects
+        // ----------------------------------
+
+        if (
+            req.body.subjects !== undefined
+        ) {
+
+            const validation =
+                validateDepartmentSubjects(
+                    req.body.subjects
+                );
+
+
+            if (!validation.valid) {
+
+                return res.status(400).json({
+
+                    success: false,
+
+                    message:
+                        validation.message
+
+                });
 
             }
 
-        });
 
-
-        // ------------------------------
-        // Normalize values
-        // ------------------------------
-
-        if (exam.examName) {
-
-            exam.examName =
-                exam.examName.trim();
+            exam.subjects =
+                buildSubjects(
+                    req.body.subjects
+                );
 
         }
 
 
-        if (exam.subjectCode) {
-
-            exam.subjectCode =
-                exam.subjectCode
-                    .trim()
-                    .toUpperCase();
-
-        }
-
-
-        if (exam.subjectName) {
-
-            exam.subjectName =
-                exam.subjectName.trim();
-
-        }
-
-
-        // ------------------------------
-        // Validate time
-        // ------------------------------
+        // ----------------------------------
+        // Validate Time
+        // ----------------------------------
 
         if (
             exam.startTime &&
@@ -382,13 +773,14 @@ exports.updateExam = async (req, res) => {
             success: true,
 
             message:
-                "Exam updated successfully.",
+                "Examination updated successfully.",
 
             exam
 
         });
 
     }
+
 
     catch (error) {
 
@@ -450,11 +842,12 @@ exports.deleteExam = async (req, res) => {
             success: true,
 
             message:
-                "Exam deleted successfully."
+                "Examination deleted successfully."
 
         });
 
     }
+
 
     catch (error) {
 

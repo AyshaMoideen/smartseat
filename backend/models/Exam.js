@@ -1,21 +1,49 @@
 const mongoose = require("mongoose");
 
-const examSchema = new mongoose.Schema(
+
+// ==========================================
+// SUBJECT SCHEMA
+// ==========================================
+
+const examSubjectSchema = new mongoose.Schema(
     {
-        examName: {
+        subjectCode: {
+            type: String,
+            trim: true,
+            uppercase: true,
+            default: ""
+        },
+
+        subjectName: {
             type: String,
             required: true,
             trim: true
         },
 
-        subjectCode: {
-            type: String,
-            required: true,
-            trim: true,
-            uppercase: true
-        },
+        departments: [
+            {
+                type: String,
+                trim: true
+            }
+        ]
+    },
+    {
+        _id: false
+    }
+);
 
-        subjectName: {
+
+// ==========================================
+// EXAM SCHEMA
+// ==========================================
+
+const examSchema = new mongoose.Schema(
+    {
+        // ----------------------------------
+        // Common Examination Details
+        // ----------------------------------
+
+        examName: {
             type: String,
             required: true,
             trim: true
@@ -27,13 +55,6 @@ const examSchema = new mongoose.Schema(
             min: 1,
             max: 6
         },
-
-        departments: [
-            {
-                type: String,
-                trim: true
-            }
-        ],
 
         examDate: {
             type: Date,
@@ -56,20 +77,50 @@ const examSchema = new mongoose.Schema(
             required: true
         },
 
+
+        // ----------------------------------
+        // Department / Programme Subjects
+        // ----------------------------------
+
+        subjects: {
+            type: [examSubjectSchema],
+            required: true,
+            validate: {
+                validator: function (value) {
+                    return value.length > 0;
+                },
+
+                message:
+                    "At least one examination subject is required."
+            }
+        },
+
+
+        // ----------------------------------
+        // Duration
+        // ----------------------------------
+
         duration: {
             type: String,
-            default: "3 Hours"
+            default: "1 Hour"
         },
+
+
+        // ----------------------------------
+        // Status
+        // ----------------------------------
 
         status: {
             type: Boolean,
             default: true
         }
     },
+
     {
         timestamps: true
     }
 );
+
 
 module.exports =
     mongoose.model("Exam", examSchema);

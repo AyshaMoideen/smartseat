@@ -8,6 +8,20 @@ const API_URL = "http://localhost:5000/api/exams";
 
 let exams = [];
 
+
+// ==========================================
+// AVAILABLE DEPARTMENTS
+// ==========================================
+
+const DEPARTMENTS = [
+    "BBA.TTM",
+    "BBA.AVH",
+    "BCOM.CA/CP",
+    "BCA",
+    "BA.ENG"
+];
+
+
 // ==========================================
 // DOM READY
 // ==========================================
@@ -17,6 +31,12 @@ document.addEventListener("DOMContentLoaded", () => {
     console.log("Create Exam Page Loaded");
 
     loadExams();
+
+    initializeDepartmentRows();
+
+    document
+        .getElementById("addDepartmentBtn")
+        .addEventListener("click", addDepartmentRow);
 
     document
         .getElementById("saveExamBtn")
@@ -37,6 +57,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document
         .getElementById("clearExamBtnBottom")
         .addEventListener("click", clearAllExams);
+
 });
 
 
@@ -45,7 +66,9 @@ document.addEventListener("DOMContentLoaded", () => {
 // ==========================================
 
 function getToken() {
+
     return localStorage.getItem("token");
+
 }
 
 
@@ -66,6 +89,324 @@ function getHeaders() {
             }
             : {})
     };
+
+}
+
+
+// ==========================================
+// INITIAL DEPARTMENT ROW
+// ==========================================
+
+function initializeDepartmentRows() {
+
+    const container =
+        document.getElementById(
+            "departmentSubjectsContainer"
+        );
+
+    container.innerHTML = "";
+
+    addDepartmentRow();
+
+}
+
+
+// ==========================================
+// ADD DEPARTMENT ROW
+// ==========================================
+
+function addDepartmentRow() {
+
+    const container =
+        document.getElementById(
+            "departmentSubjectsContainer"
+        );
+
+    const row = document.createElement("div");
+
+    row.className =
+        "department-subject-row row align-items-end mb-3";
+
+
+    row.innerHTML = `
+
+        <div class="col-md-3">
+
+            <label class="form-label">
+                Department / Programme
+            </label>
+
+            <select
+                class="form-select department-select">
+
+                <option value="">
+                    Select Department
+                </option>
+
+                ${DEPARTMENTS.map(department => `
+                    <option value="${escapeHTML(department)}">
+                        ${escapeHTML(department)}
+                    </option>
+                `).join("")}
+
+            </select>
+
+        </div>
+
+
+        <div class="col-md-3">
+
+            <label class="form-label">
+                Subject Code
+                <small class="text-muted">
+                    (Optional)
+                </small>
+            </label>
+
+            <input
+                type="text"
+                class="form-control subject-code"
+                placeholder="Example: CS501">
+
+        </div>
+
+
+        <div class="col-md-4">
+
+            <label class="form-label">
+                Subject Name
+            </label>
+
+            <input
+                type="text"
+                class="form-control subject-name"
+                placeholder="Enter subject name">
+
+        </div>
+
+
+        <div class="col-md-2">
+
+            <button
+                type="button"
+                class="btn btn-outline-danger w-100 remove-department-btn">
+
+                <i class="bi bi-trash"></i>
+
+                Remove
+
+            </button>
+
+        </div>
+
+    `;
+
+
+    container.appendChild(row);
+
+
+    row
+        .querySelector(".remove-department-btn")
+        .addEventListener(
+            "click",
+            () => {
+
+                row.remove();
+
+                updateCommonSubjects();
+
+            }
+        );
+
+
+    row
+        .querySelector(".subject-name")
+        .addEventListener(
+            "input",
+            updateCommonSubjects
+        );
+
+}
+
+
+// ==========================================
+// COLLECT DEPARTMENT SUBJECTS
+// ==========================================
+
+function collectDepartmentSubjects() {
+
+    const rows =
+        document.querySelectorAll(
+            ".department-subject-row"
+        );
+
+    const subjects = [];
+
+
+    rows.forEach(row => {
+
+        const department =
+            row
+                .querySelector(".department-select")
+                .value
+                .trim();
+
+
+        const subjectCode =
+            row
+                .querySelector(".subject-code")
+                .value
+                .trim();
+
+
+        const subjectName =
+            row
+                .querySelector(".subject-name")
+                .value
+                .trim();
+
+
+        if (
+            department ||
+            subjectCode ||
+            subjectName
+        ) {
+
+            subjects.push({
+
+                department,
+
+                subjectCode,
+
+                subjectName
+
+            });
+
+        }
+
+    });
+
+
+    return subjects;
+
+}
+
+
+// ==========================================
+// COMMON SUBJECT DETECTION
+// ==========================================
+
+function getCommonSubjects(subjects) {
+
+    const groups = {};
+
+
+    subjects.forEach(subject => {
+
+        const name =
+            subject.subjectName
+                .trim()
+                .toLowerCase()
+                .replace(/\s+/g, " ");
+
+
+        if (!name) {
+            return;
+        }
+
+
+        if (!groups[name]) {
+
+            groups[name] = [];
+
+        }
+
+
+        groups[name].push(
+            subject.department
+        );
+
+    });
+
+
+    return Object.entries(groups)
+
+        .filter(
+            ([name, departments]) =>
+                departments.length > 1
+        )
+
+        .map(
+            ([name, departments]) => ({
+                subjectName: name,
+                departments
+            })
+        );
+
+}
+
+
+// ==========================================
+// UPDATE COMMON SUBJECT INFO
+// ==========================================
+
+function updateCommonSubjects() {
+
+    const subjects =
+        collectDepartmentSubjects();
+
+
+    const commonSubjects =
+        getCommonSubjects(subjects);
+
+
+    const info =
+        document.getElementById(
+            "commonSubjectsInfo"
+        );
+
+
+    const text =
+        document.getElementById(
+            "commonSubjectsText"
+        );
+
+
+    if (commonSubjects.length === 0) {
+
+        info.style.display = "none";
+
+        text.textContent = "";
+
+        return;
+
+    }
+
+
+    info.style.display = "block";
+
+
+    text.innerHTML =
+        commonSubjects
+            .map(common => {
+
+                return `
+                    <strong>
+                        ${escapeHTML(
+                            common.subjectName
+                        )}
+                    </strong>
+
+                    →
+                    
+                    ${common.departments
+                        .map(escapeHTML)
+                        .join(", ")}
+                `;
+
+            })
+            .join("<br>");
+
 }
 
 
@@ -75,55 +416,57 @@ function getHeaders() {
 
 async function loadExams() {
 
-    console.log("Loading examinations...");
-
     try {
 
-        const response = await fetch(API_URL, {
-            method: "GET",
-            headers: getHeaders()
-        });
+        const response =
+            await fetch(
+                API_URL,
+                {
+                    method: "GET",
+                    headers: getHeaders()
+                }
+            );
 
-        const data = await response.json();
 
-        console.log(
-            "Exams API response:",
-            response.status,
-            data
-        );
+        const data =
+            await response.json();
+
 
         if (!response.ok) {
 
             throw new Error(
                 data.message ||
                 data.error ||
-                `Failed to load exams: ${response.status}`
+                "Failed to load examinations."
             );
+
         }
+
 
         if (Array.isArray(data)) {
 
             exams = data;
 
-        } else if (Array.isArray(data.exams)) {
+        }
+
+        else if (Array.isArray(data.exams)) {
 
             exams = data.exams;
 
-        } else if (Array.isArray(data.data)) {
+        }
+
+        else if (Array.isArray(data.data)) {
 
             exams = data.data;
 
-        } else if (Array.isArray(data.results)) {
+        }
 
-            exams = data.results;
-
-        } else {
+        else {
 
             exams = [];
 
         }
 
-        console.log("Exams loaded:", exams);
 
         renderTable(exams);
 
@@ -138,12 +481,19 @@ async function loadExams() {
             error
         );
 
+
         Swal.fire({
+
             icon: "error",
+
             title: "Unable to Load Exams",
+
             text: error.message
+
         });
+
     }
+
 }
 
 
@@ -155,29 +505,55 @@ async function saveExam() {
 
     console.log("Save Examination clicked");
 
+
+    // ======================================
+    // COMMON DETAILS
+    // ======================================
+
     const examName =
-        document.getElementById("examName").value.trim();
+        document
+            .getElementById("examName")
+            .value
+            .trim();
+    console.log("EXAM NAME:", examName);
 
-    const subjectCode =
-        document.getElementById("subjectCode").value.trim();
-
-    const subjectName =
-        document.getElementById("subjectName").value.trim();
 
     const semester =
-        document.getElementById("examSemester").value;
+        document
+            .getElementById("examSemester")
+            .value;
+
 
     const session =
-        document.getElementById("session").value;
+        document
+            .getElementById("session")
+            .value;
+
 
     const examDate =
-        document.getElementById("examDate").value;
+        document
+            .getElementById("examDate")
+            .value;
+
 
     const startTime =
-        document.getElementById("startTime").value;
+        document
+            .getElementById("startTime")
+            .value;
+
 
     const endTime =
-        document.getElementById("endTime").value;
+        document
+            .getElementById("endTime")
+            .value;
+
+
+    // ======================================
+    // DEPARTMENT SUBJECTS
+    // ======================================
+
+    const departmentSubjects =
+        collectDepartmentSubjects();
 
 
     // ======================================
@@ -195,27 +571,6 @@ async function saveExam() {
         return;
     }
 
-    if (!subjectCode) {
-
-        Swal.fire(
-            "Required",
-            "Please enter the subject code.",
-            "warning"
-        );
-
-        return;
-    }
-
-    if (!subjectName) {
-
-        Swal.fire(
-            "Required",
-            "Please enter the subject name.",
-            "warning"
-        );
-
-        return;
-    }
 
     if (!semester) {
 
@@ -228,6 +583,7 @@ async function saveExam() {
         return;
     }
 
+
     if (!session) {
 
         Swal.fire(
@@ -238,6 +594,7 @@ async function saveExam() {
 
         return;
     }
+
 
     if (!examDate) {
 
@@ -250,6 +607,7 @@ async function saveExam() {
         return;
     }
 
+
     if (!startTime) {
 
         Swal.fire(
@@ -261,6 +619,7 @@ async function saveExam() {
         return;
     }
 
+
     if (!endTime) {
 
         Swal.fire(
@@ -271,6 +630,7 @@ async function saveExam() {
 
         return;
     }
+
 
     if (endTime <= startTime) {
 
@@ -284,63 +644,158 @@ async function saveExam() {
     }
 
 
+    if (departmentSubjects.length === 0) {
+
+        Swal.fire(
+            "Departments Required",
+            "Please add at least one department and subject.",
+            "warning"
+        );
+
+        return;
+    }
+
+
+    // ======================================
+    // VALIDATE EACH ROW
+    // ======================================
+
+    for (
+        const subject
+        of departmentSubjects
+    ) {
+
+        if (!subject.department) {
+
+            Swal.fire(
+                "Department Required",
+                "Please select a department for every row.",
+                "warning"
+            );
+
+            return;
+        }
+
+
+        if (!subject.subjectName) {
+
+            Swal.fire(
+                "Subject Required",
+                `Please enter the subject name for ${subject.department}.`,
+                "warning"
+            );
+
+            return;
+        }
+
+    }
+
+
+    // ======================================
+    // CHECK DUPLICATE DEPARTMENTS
+    // ======================================
+
+    const departmentNames =
+        departmentSubjects.map(
+            subject =>
+                subject.department
+        );
+
+
+    const duplicateDepartments =
+        departmentNames.filter(
+            (department, index) =>
+                departmentNames.indexOf(
+                    department
+                ) !== index
+        );
+
+
+    if (duplicateDepartments.length > 0) {
+
+        Swal.fire(
+            "Duplicate Department",
+            `${duplicateDepartments[0]} has been added more than once.`,
+            "warning"
+        );
+
+        return;
+    }
+
+
+    // ======================================
+    // COMMON SUBJECTS
+    // ======================================
+
+    const commonSubjects =
+        getCommonSubjects(
+            departmentSubjects
+        );
+
+
+    console.log(
+        "Common subjects:",
+        commonSubjects
+    );
+
+
     // ======================================
     // EXAM DATA
     // ======================================
 
     const examData = {
 
-        examName: examName,
-
-        subjectCode: subjectCode,
-
-        subjectName: subjectName,
+        examName,
 
         semester: Number(semester),
 
-        session: session,
+        session,
 
-        examDate: examDate,
+        examDate,
 
-        startTime: startTime,
+        startTime,
 
-        endTime: endTime,
+        endTime,
+
+        subjects: departmentSubjects,
 
         status: true
+
     };
 
 
     console.log(
-        "Sending exam data:",
+        "Sending examination:",
         examData
     );
 
 
     // ======================================
-    // SEND TO MONGODB
+    // SAVE TO MONGODB
     // ======================================
 
     try {
 
-        const response = await fetch(API_URL, {
+        const response =
+            await fetch(
+                API_URL,
+                {
 
-            method: "POST",
+                    method: "POST",
 
-            headers: getHeaders(),
+                    headers: getHeaders(),
 
-            body: JSON.stringify(examData)
+                    body:
+                        JSON.stringify(
+                            examData
+                        )
 
-        });
+                }
+            );
 
 
-        const data = await response.json();
-
-
-        console.log(
-            "Save API response:",
-            response.status,
-            data
-        );
+        const data =
+            await response.json();
 
 
         if (!response.ok) {
@@ -360,7 +815,8 @@ async function saveExam() {
 
             title: "Examination Saved",
 
-            text: "Examination created successfully.",
+            text:
+                "The examination and department subjects were created successfully.",
 
             confirmButtonText: "OK"
 
@@ -380,6 +836,7 @@ async function saveExam() {
             error
         );
 
+
         Swal.fire({
 
             icon: "error",
@@ -391,6 +848,7 @@ async function saveExam() {
         });
 
     }
+
 }
 
 
@@ -400,21 +858,38 @@ async function saveExam() {
 
 function clearForm() {
 
-    document.getElementById("examName").value = "";
+    document
+        .getElementById("examName")
+        .value = "";
 
-    document.getElementById("subjectCode").value = "";
 
-    document.getElementById("subjectName").value = "";
+    document
+        .getElementById("examSemester")
+        .value = "";
 
-    document.getElementById("examSemester").value = "";
 
-    document.getElementById("session").value = "";
+    document
+        .getElementById("session")
+        .value = "";
 
-    document.getElementById("examDate").value = "";
 
-    document.getElementById("startTime").value = "";
+    document
+        .getElementById("examDate")
+        .value = "";
 
-    document.getElementById("endTime").value = "";
+
+    document
+        .getElementById("startTime")
+        .value = "";
+
+
+    document
+        .getElementById("endTime")
+        .value = "";
+
+
+    initializeDepartmentRows();
+
 }
 
 
@@ -425,7 +900,10 @@ function clearForm() {
 function renderTable(data) {
 
     const table =
-        document.getElementById("examTable");
+        document.getElementById(
+            "examTable"
+        );
+
 
     table.innerHTML = "";
 
@@ -454,11 +932,12 @@ function renderTable(data) {
 
     data.forEach(exam => {
 
-        const date = exam.examDate
-            ? new Date(
-                exam.examDate
-            ).toLocaleDateString()
-            : "-";
+        const date =
+            exam.examDate
+                ? new Date(
+                    exam.examDate
+                ).toLocaleDateString()
+                : "-";
 
 
         const time =
@@ -472,6 +951,21 @@ function renderTable(data) {
 
         const examId =
             exam._id || exam.id;
+
+
+        const subjects =
+            Array.isArray(exam.subjects)
+                ? exam.subjects
+                : [];
+
+
+        const departments =
+            subjects
+                .map(
+                    subject =>
+                        subject.department
+                )
+                .filter(Boolean);
 
 
         table.innerHTML += `
@@ -490,15 +984,8 @@ function renderTable(data) {
 
                     <small>
 
-                        ${escapeHTML(
-                            exam.subjectCode || ""
-                        )}
-
-                        -
-
-                        ${escapeHTML(
-                            exam.subjectName || ""
-                        )}
+                        ${subjects.length}
+                        subject(s)
 
                     </small>
 
@@ -507,7 +994,8 @@ function renderTable(data) {
 
                 <td>
 
-                    Semester ${exam.semester || "-"}
+                    Semester
+                    ${exam.semester || "-"}
 
                 </td>
 
@@ -528,7 +1016,9 @@ function renderTable(data) {
 
                 <td>
 
-                    ${exam.room || "-"}
+                    ${departments.length}
+
+                    Department(s)
 
                 </td>
 
@@ -550,6 +1040,7 @@ function renderTable(data) {
         `;
 
     });
+
 }
 
 
@@ -565,6 +1056,7 @@ function escapeHTML(value) {
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
+
 }
 
 
@@ -616,10 +1108,6 @@ function updateStatistics() {
         );
 
 
-    // ======================================
-    // TOP STATISTICS
-    // ======================================
-
     document.getElementById(
         "totalExams"
     ).textContent = exams.length;
@@ -640,10 +1128,6 @@ function updateStatistics() {
     ).textContent = semesters.size;
 
 
-    // ======================================
-    // SUMMARY
-    // ======================================
-
     document.getElementById(
         "summaryTotal"
     ).textContent = exams.length;
@@ -662,6 +1146,7 @@ function updateStatistics() {
     document.getElementById(
         "summaryDepartments"
     ).textContent = semesters.size;
+
 }
 
 
@@ -682,26 +1167,25 @@ function searchExams() {
     const filtered =
         exams.filter(exam => {
 
+            const subjects =
+                Array.isArray(exam.subjects)
+                    ? exam.subjects
+                    : [];
+
+
+            const subjectText =
+                subjects
+                    .map(subject =>
+                        `${subject.department} ${subject.subjectName} ${subject.subjectCode}`
+                    )
+                    .join(" ")
+                    .toLowerCase();
+
+
             return (
 
                 String(
                     exam.examName || ""
-                )
-                .toLowerCase()
-                .includes(keyword)
-
-                ||
-
-                String(
-                    exam.subjectCode || ""
-                )
-                .toLowerCase()
-                .includes(keyword)
-
-                ||
-
-                String(
-                    exam.subjectName || ""
                 )
                 .toLowerCase()
                 .includes(keyword)
@@ -714,12 +1198,19 @@ function searchExams() {
                 .toLowerCase()
                 .includes(keyword)
 
+                ||
+
+                subjectText.includes(
+                    keyword
+                )
+
             );
 
         });
 
 
     renderTable(filtered);
+
 }
 
 
@@ -744,17 +1235,23 @@ async function deleteExam(id) {
     const result =
         await Swal.fire({
 
-            title: "Delete Examination?",
+            title:
+                "Delete Examination?",
 
-            text: "This action cannot be undone.",
+            text:
+                "This will remove the examination and its department subjects.",
 
-            icon: "warning",
+            icon:
+                "warning",
 
-            showCancelButton: true,
+            showCancelButton:
+                true,
 
-            confirmButtonText: "Delete",
+            confirmButtonText:
+                "Delete",
 
-            cancelButtonText: "Cancel"
+            cancelButtonText:
+                "Cancel"
 
         });
 
@@ -771,9 +1268,11 @@ async function deleteExam(id) {
                 `${API_URL}/${id}`,
                 {
 
-                    method: "DELETE",
+                    method:
+                        "DELETE",
 
-                    headers: getHeaders()
+                    headers:
+                        getHeaders()
 
                 }
             );
@@ -795,11 +1294,14 @@ async function deleteExam(id) {
 
         await Swal.fire({
 
-            icon: "success",
+            icon:
+                "success",
 
-            title: "Deleted",
+            title:
+                "Deleted",
 
-            text: "Examination deleted successfully."
+            text:
+                "Examination deleted successfully."
 
         });
 
@@ -810,22 +1312,22 @@ async function deleteExam(id) {
 
     catch (error) {
 
-        console.error(
-            "Delete examination error:",
-            error
-        );
+        console.error(error);
+
 
         Swal.fire(
             "Error",
             error.message,
             "error"
         );
+
     }
+
 }
 
 
 // ==========================================
-// CLEAR ALL EXAMS
+// CLEAR ALL
 // ==========================================
 
 async function clearAllExams() {
@@ -845,18 +1347,23 @@ async function clearAllExams() {
     const result =
         await Swal.fire({
 
-            title: "Delete All Examinations?",
+            title:
+                "Delete All Examinations?",
 
             text:
                 "This will permanently remove all examinations.",
 
-            icon: "warning",
+            icon:
+                "warning",
 
-            showCancelButton: true,
+            showCancelButton:
+                true,
 
-            confirmButtonText: "Delete All",
+            confirmButtonText:
+                "Delete All",
 
-            cancelButtonText: "Cancel"
+            cancelButtonText:
+                "Cancel"
 
         });
 
@@ -868,10 +1375,14 @@ async function clearAllExams() {
 
     try {
 
-        for (const exam of exams) {
+        for (
+            const exam
+            of exams
+        ) {
 
             const id =
                 exam._id || exam.id;
+
 
             await deleteExamDirect(id);
 
@@ -880,11 +1391,14 @@ async function clearAllExams() {
 
         await Swal.fire({
 
-            icon: "success",
+            icon:
+                "success",
 
-            title: "Success",
+            title:
+                "Success",
 
-            text: "All examinations deleted."
+            text:
+                "All examinations deleted."
 
         });
 
@@ -897,12 +1411,15 @@ async function clearAllExams() {
 
         console.error(error);
 
+
         Swal.fire(
             "Error",
-            "Unable to clear examinations.",
+            error.message,
             "error"
         );
+
     }
+
 }
 
 
@@ -917,9 +1434,11 @@ async function deleteExamDirect(id) {
             `${API_URL}/${id}`,
             {
 
-                method: "DELETE",
+                method:
+                    "DELETE",
 
-                headers: getHeaders()
+                headers:
+                    getHeaders()
 
             }
         );
@@ -930,17 +1449,26 @@ async function deleteExamDirect(id) {
         let data = {};
 
         try {
-            data = await response.json();
+
+            data =
+                await response.json();
+
         }
+
         catch (error) {
-            // Ignore invalid JSON response
+
+            // Ignore invalid JSON
+
         }
+
 
         throw new Error(
             data.message ||
             "Failed to delete examination."
         );
+
     }
+
 }
 
 
@@ -965,23 +1493,15 @@ function exportExams() {
     const rows = [
 
         [
-
             "Exam Name",
-
-            "Subject Code",
-
-            "Subject Name",
-
             "Semester",
-
             "Date",
-
             "Session",
-
             "Start Time",
-
-            "End Time"
-
+            "End Time",
+            "Department",
+            "Subject Code",
+            "Subject Name"
         ]
 
     ];
@@ -989,29 +1509,41 @@ function exportExams() {
 
     exams.forEach(exam => {
 
-        rows.push([
+        const subjects =
+            Array.isArray(exam.subjects)
+                ? exam.subjects
+                : [];
 
-            exam.examName || "",
 
-            exam.subjectCode || "",
+        subjects.forEach(subject => {
 
-            exam.subjectName || "",
+            rows.push([
 
-            exam.semester || "",
+                exam.examName || "",
 
-            exam.examDate
-                ? String(
-                    exam.examDate
-                ).substring(0, 10)
-                : "",
+                exam.semester || "",
 
-            exam.session || "",
+                exam.examDate
+                    ? String(
+                        exam.examDate
+                    ).substring(0, 10)
+                    : "",
 
-            exam.startTime || "",
+                exam.session || "",
 
-            exam.endTime || ""
+                exam.startTime || "",
 
-        ]);
+                exam.endTime || "",
+
+                subject.department || "",
+
+                subject.subjectCode || "",
+
+                subject.subjectName || ""
+
+            ]);
+
+        });
 
     });
 
@@ -1042,4 +1574,5 @@ function exportExams() {
         "examinations.xlsx"
 
     );
+
 }

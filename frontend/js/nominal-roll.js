@@ -12,7 +12,7 @@ let currentStudents = [];
 let currentExam = "";
 let currentExamName = "";
 let currentExamData = null;
-
+let pendingFileCount = 0;
 
 // ==========================================
 // DOM READY
@@ -407,7 +407,6 @@ function loadRolls() {
 
 }
 
-
 // ==========================================
 // UPDATE FILE COUNT
 // ==========================================
@@ -417,15 +416,24 @@ function updateFileCount() {
     const totalFiles =
         document.getElementById("totalFiles");
 
-
     if (!totalFiles) return;
 
+    const fileCount =
+        rolls.reduce(
+            (total, roll) => {
 
-    totalFiles.textContent =
-        rolls.length;
+                return total +
+                    Number(
+                        roll.fileCount || 0
+                    );
+
+            },
+            0
+        );
+
+    totalFiles.textContent = fileCount;
 
 }
-
 
 // ==========================================
 // RENDER STUDENTS
@@ -735,7 +743,8 @@ async function importExcelFiles() {
 
     let importedCount = 0;
     let duplicateCount = 0;
-
+    pendingFileCount =
+    excelFiles.files.length;
 
     try {
 
@@ -744,13 +753,15 @@ async function importExcelFiles() {
         // ==================================
 
         for (
-            const file of excelFiles.files
-        ) {
+    const file of excelFiles.files
+) {
 
-            console.log(
-                "Reading:",
-                file.name
-            );
+    console.log(
+        "Reading:",
+        file.name
+    );
+
+    uploadedFileCount++;
 
 
             const students =
@@ -869,7 +880,6 @@ async function importExcelFiles() {
 
 }
 
-
 // ==========================================
 // SAVE CURRENT ROLL
 // ==========================================
@@ -881,29 +891,22 @@ function saveCurrentRoll() {
             "examSelect"
         );
 
-
     const examId =
         examSelect.value;
 
-
     if (!examId) {
-
         return;
-
     }
-
 
     const selectedOption =
         examSelect.options[
             examSelect.selectedIndex
         ];
 
-
     const examName =
         selectedOption
             ? selectedOption.textContent.trim()
             : "Unnamed Exam";
-
 
     const index =
         rolls.findIndex(
@@ -912,6 +915,10 @@ function saveCurrentRoll() {
                 String(examId)
         );
 
+    const existingRoll =
+        index !== -1
+            ? rolls[index]
+            : null;
 
     const roll = {
 
@@ -924,11 +931,18 @@ function saveCurrentRoll() {
         importedOn:
             new Date().toISOString(),
 
+        fileCount:
+            Number(
+                existingRoll?.fileCount || 0
+            ) +
+            Number(
+                pendingFileCount || 0
+            ),
+
         students:
             [...currentStudents]
 
     };
-
 
     if (index === -1) {
 
@@ -942,18 +956,17 @@ function saveCurrentRoll() {
 
     }
 
+    // Reset pending count
+    pendingFileCount = 0;
 
     localStorage.setItem(
         "nominalRolls",
         JSON.stringify(rolls)
     );
 
-
     updateFileCount();
 
-
     renderStudents();
-
 
     // ======================================
     // ACTIVITY
@@ -971,7 +984,6 @@ function saveCurrentRoll() {
     }
 
 }
-
 
 // ==========================================
 // READ EXCEL FILE

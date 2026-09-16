@@ -462,3 +462,558 @@ QUICK ACTIONS
     }
 
 }
+/* ==========================================
+   SMARTSEAT DASHBOARD OVERVIEW
+========================================== */
+
+.dashboard-overview {
+
+    display: grid;
+
+    grid-template-columns: 1fr 1fr;
+
+    gap: 25px;
+
+    margin-top: 25px;
+
+}
+
+
+.dashboard-card {
+
+    background: #ffffff;
+
+    border-radius: 24px;
+
+    padding: 30px;
+
+    box-shadow:
+        0 10px 30px rgba(11, 45, 92, 0.08);
+
+}
+
+
+/* ==========================================
+   CARD HEADING
+========================================== */
+
+.card-heading {
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    margin-bottom: 25px;
+
+}
+
+
+.card-heading h4 {
+
+    margin: 0;
+
+    font-family: "Montserrat", sans-serif;
+
+    font-size: 24px;
+
+    font-weight: 800;
+
+    color: #0B2D5C;
+
+}
+
+
+.card-heading p {
+
+    margin: 6px 0 0;
+
+    color: #777;
+
+    font-size: 14px;
+
+}
+
+
+.card-heading > i {
+
+    width: 48px;
+
+    height: 48px;
+
+    border-radius: 14px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    background: #EAF4FF;
+
+    color: #1D8EF7;
+
+    font-size: 22px;
+
+}
+
+
+/* ==========================================
+   DEPARTMENT ROW
+========================================== */
+
+.department-list {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 12px;
+
+}
+
+
+.department-row {
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    padding: 15px;
+
+    border-radius: 15px;
+
+    background: #F8FAFD;
+
+    transition: 0.2s ease;
+
+}
+
+
+.department-row:hover {
+
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 5px 15px rgba(0,0,0,0.05);
+
+}
+
+
+.department-info {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 14px;
+
+}
+
+
+.department-icon {
+
+    width: 42px;
+
+    height: 42px;
+
+    border-radius: 12px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    background: #EAF4FF;
+
+    color: #1D8EF7;
+
+}
+
+
+.department-info strong {
+
+    display: block;
+
+    color: #0B2D5C;
+
+    font-size: 15px;
+
+}
+
+
+.department-info span {
+
+    display: block;
+
+    margin-top: 3px;
+
+    color: #777;
+
+    font-size: 13px;
+
+}
+
+
+.department-count {
+
+    text-align: right;
+
+}
+
+
+.department-count strong {
+
+    display: block;
+
+    color: #0B2D5C;
+
+    font-size: 20px;
+
+}
+
+
+.department-count small {
+
+    color: #888;
+
+}
+
+
+/* ==========================================
+   ROOM ROW
+========================================== */
+
+.room-list {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 12px;
+
+}
+
+
+.room-row {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    padding: 15px;
+
+    border-radius: 15px;
+
+    background: #F8FAFD;
+
+}
+
+
+.room-info {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 14px;
+
+}
+
+
+.room-icon {
+
+    width: 42px;
+
+    height: 42px;
+
+    border-radius: 12px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    background: #EAF4FF;
+
+    color: #1D8EF7;
+
+}
+
+
+.room-info strong {
+
+    display: block;
+
+    color: #0B2D5C;
+
+    font-size: 15px;
+
+}
+
+
+.room-info span {
+
+    display: block;
+
+    margin-top: 3px;
+
+    color: #777;
+
+    font-size: 13px;
+
+}
+
+
+.status-active {
+
+    color: #16A34A;
+
+    font-size: 13px;
+
+    font-weight: 600;
+
+}
+
+
+.status-inactive {
+
+    color: #DC2626;
+
+    font-size: 13px;
+
+    font-weight: 600;
+
+}
+
+
+.status-active i,
+.status-inactive i {
+
+    font-size: 7px;
+
+    vertical-align: middle;
+
+    margin-right: 4px;
+
+}
+
+
+/* ==========================================
+   EXAM OVERVIEW
+========================================== */
+
+.exam-overview-card {
+
+    margin-top: 25px;
+
+}
+
+
+.exam-row {
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    padding: 16px;
+
+    border-radius: 15px;
+
+    background: #F8FAFD;
+
+    margin-bottom: 10px;
+
+}
+
+
+.exam-info {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 14px;
+
+}
+
+
+.exam-icon {
+
+    width: 42px;
+
+    height: 42px;
+
+    border-radius: 12px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    background: #EAF4FF;
+
+    color: #1D8EF7;
+
+}
+
+
+.exam-info strong {
+
+    display: block;
+
+    color: #0B2D5C;
+
+    font-size: 15px;
+
+}
+
+
+.exam-info span {
+
+    display: block;
+
+    color: #777;
+
+    font-size: 13px;
+
+    margin-top: 3px;
+
+}
+
+
+.exam-date {
+
+    text-align: right;
+
+}
+
+
+.exam-date strong {
+
+    display: block;
+
+    color: #0B2D5C;
+
+    font-size: 14px;
+
+}
+
+
+.exam-date span {
+
+    color: #777;
+
+    font-size: 12px;
+
+}
+
+
+/* ==========================================
+   EMPTY / LOADING / ERROR
+========================================== */
+
+.dashboard-loading {
+
+    padding: 30px;
+
+    text-align: center;
+
+    color: #888;
+
+}
+
+
+.dashboard-empty {
+
+    padding: 30px;
+
+    text-align: center;
+
+    color: #888;
+
+}
+
+
+.dashboard-empty i {
+
+    display: block;
+
+    font-size: 35px;
+
+    margin-bottom: 10px;
+
+    color: #B8C4D3;
+
+}
+
+
+.dashboard-empty p {
+
+    margin: 0;
+
+}
+
+
+.dashboard-error {
+
+    padding: 20px;
+
+    text-align: center;
+
+    color: #DC2626;
+
+}
+
+
+/* ==========================================
+   RESPONSIVE
+========================================== */
+
+@media (max-width: 992px) {
+
+    .dashboard-overview {
+
+        grid-template-columns: 1fr;
+
+    }
+
+}
+
+
+@media (max-width: 576px) {
+
+    .dashboard-card {
+
+        padding: 20px;
+
+    }
+
+
+    .card-heading h4 {
+
+        font-size: 20px;
+
+    }
+
+
+    .room-row,
+    .exam-row {
+
+        align-items: flex-start;
+
+        gap: 10px;
+
+    }
+
+}

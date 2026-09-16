@@ -85,7 +85,7 @@ class="form-select">
 
 <label class="form-label">
 
-Nominal Roll Status
+Additional Entries
 
 </label>
 
@@ -95,7 +95,7 @@ Nominal Roll Status
 
 <span id="rollStatus">
 
-No Roll Uploaded
+No Additional Entries
 
 </span>
 
@@ -227,55 +227,135 @@ Export Excel
 
 <div class="table-card mt-5">
 
-<h4>
+    <h4>
+        <i class="bi bi-table"></i>
+        Generated Seating
+    </h4>
 
-<i class="bi bi-table"></i>
 
-Generated Seating
+    <!-- ======================================
+         SEATING VERIFICATION CONTROLS
+    ======================================= -->
 
-</h4>
+    <div
+        class="row g-3 mt-3 mb-3"
+    >
 
-<div class="table-responsive">
+        <!-- SEARCH -->
 
-<table class="table">
+        <div class="col-md-6">
 
-<thead>
+            <label
+                class="form-label"
+            >
+                Search Student
+            </label>
 
-<tr>
+            <input
+                type="text"
+                id="seatingSearch"
+                class="form-control"
+                placeholder="Search Register No or Student Name"
+            >
 
-<th>Register No</th>
+        </div>
 
-<th>Name</th>
 
-<th>Semester</th>
+        <!-- DEPARTMENT -->
 
-<th>Room</th>
+        <div class="col-md-6">
 
-<th>Bench</th>
+            <label
+                class="form-label"
+            >
+                Department
+            </label>
 
-<th>Seat</th>
+            <select
+                id="departmentFilter"
+                class="form-select"
+            >
 
-</tr>
+                <option value="">
+                    All Departments
+                </option>
 
-</thead>
+            </select>
 
-<tbody id="seatingTable">
+        </div>
 
-<tr>
+    </div>
 
-<td colspan="6" class="text-center">
 
-No Seating Generated
+    <!-- ======================================
+         VERIFICATION SUMMARY
+    ======================================= -->
 
-</td>
+    <div
+        id="seatingVerification"
+        class="mb-3"
+    >
 
-</tr>
+        <div
+            class="alert alert-secondary mb-0"
+        >
 
-</tbody>
+            <strong>
+                Seating not generated yet.
+            </strong>
 
-</table>
+        </div>
 
-</div>
+    </div>
+
+
+    <!-- ======================================
+         TABLE
+    ======================================= -->
+
+    <div class="table-responsive">
+
+        <table class="table">
+
+            <thead>
+
+                <tr>
+
+                    <th>SL.NO</th>
+                    <th>Register No</th>
+                    <th>Name</th>
+                    <th>Department</th>
+                    <th>Semester</th>
+                    <th>Room</th>
+                    <th>Bench</th>
+                    <th>Column</th>
+                    <th>Seat</th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody id="seatingTable">
+
+                <tr>
+
+                    <td
+                        colspan="9"
+                        class="text-center"
+                    >
+
+                        No Seating Generated
+
+                    </td>
+
+                </tr>
+
+            </tbody>
+
+        </table>
+
+    </div>
 
 </div>
 

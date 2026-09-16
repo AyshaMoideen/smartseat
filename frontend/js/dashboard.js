@@ -1,150 +1,720 @@
 /* ==========================================
-   SMARTSEAT DASHBOARD
+   SMARTSEAT
+   DASHBOARD
+   MongoDB Version
+========================================== */
+
+const STUDENTS_API = "http://localhost:5000/api/students";
+const ROOMS_API = "http://localhost:5000/api/rooms";
+const EXAMS_API = "http://localhost:5000/api/exams";
+
+const token = localStorage.getItem("token");
+
+
+/* ==========================================
+   PAGE LOAD
 ========================================== */
 
 document.addEventListener("DOMContentLoaded", () => {
 
-    DashboardManager.render();
-
     loadTeacher();
 
-    loadRecentActivity();
-
-    loadCharts();
+    loadDashboard();
 
     initializeButtons();
 
 });
 
+
 /* ==========================================
-   Teacher
+   TEACHER
 ========================================== */
 
-function loadTeacher(){
+function loadTeacher() {
 
     const teacherName =
+        localStorage.getItem("teacherName") || "Teacher";
 
-        localStorage.getItem("teacherName")
-
-        ||
-
-        "Teacher";
-
-    const teacherElement =
-
+    const element =
         document.getElementById("teacherName");
 
-    if(teacherElement){
+    if (element) {
 
-        teacherElement.textContent =
-
-        teacherName;
+        element.textContent = teacherName;
 
     }
 
 }
 
+
 /* ==========================================
-   Recent Activity
+   LOAD DASHBOARD
 ========================================== */
 
-function loadRecentActivity(){
+async function loadDashboard() {
 
-    const table =
+    try {
 
-        document.getElementById("activityTable");
+        const headers = {
 
-    if(!table) return;
+            "Content-Type": "application/json",
 
-    table.innerHTML = "";
+            "Authorization": `Bearer ${token}`
 
-    const exams =
+        };
 
-        DashboardManager.getRecentExams();
 
-    if(exams.length===0){
+        const [
+            studentsResponse,
+            roomsResponse,
+            examsResponse
+        ] = await Promise.all([
 
-        table.innerHTML = `
+            fetch(STUDENTS_API, {
+                headers
+            }),
 
-        <tr>
+            fetch(ROOMS_API, {
+                headers
+            }),
 
-            <td colspan="3" class="text-center">
+            fetch(EXAMS_API, {
+                headers
+            })
 
-                No Recent Activity
+        ]);
 
-            </td>
 
-        </tr>
+        if (!studentsResponse.ok) {
 
+            throw new Error("Unable to load students");
+
+        }
+
+        if (!roomsResponse.ok) {
+
+            throw new Error("Unable to load rooms");
+
+        }
+
+        if (!examsResponse.ok) {
+
+            throw new Error("Unable to load examinations");
+
+        }
+
+
+        const studentsData =
+            await studentsResponse.json();
+
+        const roomsData =
+            await roomsResponse.json();
+
+        const examsData =
+            await examsResponse.json();
+
+
+        const students =
+            extractArray(studentsData, "students");
+
+        const rooms =
+            extractArray(roomsData, "rooms");
+
+        const exams =
+            extractArray(examsData, "exams");
+
+
+        console.log("Dashboard Students:", students);
+        console.log("Dashboard Rooms:", rooms);
+        console.log("Dashboard Exams:", exams);
+
+
+        const generatedReport =
+    getGeneratedSeating();
+
+const seating =
+    generatedReport.seating;
+
+updateStatistics(
+    students,
+    rooms,
+    exams,
+    seating
+);
+
+
+        /* Dashboard sections */
+
+        renderDepartments(students);
+
+        renderRooms(rooms);
+
+        renderExams(exams);
+
+
+    } catch (error) {
+
+        console.error(
+            "Dashboard Error:",
+            error
+        );
+
+        showDashboardError(
+            "Unable to load dashboard data."
+        );
+
+    }
+
+}
+
+
+/* ==========================================
+   EXTRACT ARRAY
+========================================== */
+
+function extractArray(data, key) {
+
+    if (Array.isArray(data)) {
+
+        return data;
+
+    }
+
+    if (
+        data &&
+        Array.isArray(data[key])
+    ) {
+
+        return data[key];
+
+    }
+
+    if (
+        data &&
+        Array.isArray(data.data)
+    ) {
+
+        return data.data;
+
+    }
+
+    return [];
+
+}
+
+/* ==========================================
+   GET GENERATED SEATING
+========================================== */
+
+function getGeneratedSeating() {
+
+    try {
+
+        const saved =
+            localStorage.getItem(
+                "smartseatGeneratedReport"
+            );
+
+        if (!saved) {
+
+            return {
+                seating: []
+            };
+
+        }
+
+        const data =
+            JSON.parse(saved);
+
+        return {
+
+            seating:
+                Array.isArray(data.seating)
+                    ? data.seating
+                    : []
+
+        };
+
+    } catch (error) {
+
+        console.error(
+            "Unable to read generated seating:",
+            error
+        );
+
+        return {
+            seating: []
+        };
+
+    }
+
+}
+/* ==========================================
+   STATISTICS
+========================================== */
+
+function updateStatistics(
+    students,
+    rooms,
+    exams,
+    seating
+) {
+
+    const studentCount =
+        document.getElementById("studentCount");
+
+    const roomCount =
+        document.getElementById("roomCount");
+
+    const examCount =
+        document.getElementById("examCount");
+
+    const seatingCount =
+        document.getElementById("seatingCount");
+
+
+    if (studentCount) {
+
+        studentCount.textContent =
+            students.length;
+
+    }
+
+
+    if (roomCount) {
+
+        roomCount.textContent =
+            rooms.length;
+
+    }
+
+
+    if (examCount) {
+
+        examCount.textContent =
+            exams.length;
+
+    }
+
+    if (seatingCount) {
+
+    seatingCount.textContent =
+        Array.isArray(seating)
+            ? seating.length
+            : 0;
+
+}
+}
+
+/* ==========================================
+   STUDENTS BY DEPARTMENT
+========================================== */
+
+function renderDepartments(students) {
+
+    const container =
+        findOverviewContainer(
+            "Students by Department"
+        );
+
+    if (!container) {
+
+        console.warn(
+            "Students by Department container not found"
+        );
+
+        return;
+
+    }
+
+
+    const departments = {};
+
+
+    students.forEach(student => {
+
+        let department =
+            student.department || "Unknown";
+
+
+        const normalized =
+            department
+                .toUpperCase()
+                .replace(/\s+/g, "");
+
+
+        if (
+            normalized === "BCOMCA" ||
+            normalized === "BCOM.CA"
+        ) {
+
+            department = "BCOM.CA";
+
+        }
+
+        else if (
+            normalized === "BCOMCP" ||
+            normalized === "BCOM.CP"
+        ) {
+
+            department = "BCOM.CP";
+
+        }
+
+
+        departments[department] =
+            (departments[department] || 0) + 1;
+
+    });
+
+
+    const departmentNames =
+        Object.keys(departments);
+
+
+    if (departmentNames.length === 0) {
+
+        container.innerHTML = `
+            <div class="empty-state">
+                No students available
+            </div>
         `;
 
         return;
 
     }
 
-    exams.forEach(exam=>{
 
-        table.innerHTML += `
+    container.innerHTML = `
 
-        <tr>
+        <div class="department-list">
 
-            <td>${exam.name}</td>
+            ${departmentNames.map(department => `
 
-            <td>${exam.date}</td>
+                <div class="dashboard-item">
 
-            <td>
+                    <div>
 
-                <span class="badge bg-success">
+                        <strong>
+                            ${department}
+                        </strong>
 
-                    Created
+                        <span>
+                            Students
+                        </span>
 
-                </span>
+                    </div>
 
-            </td>
+                    <div class="dashboard-number">
+                        ${departments[department]}
+                    </div>
 
-        </tr>
+                </div>
 
-        `;
+            `).join("")}
 
-    });
+        </div>
+
+    `;
 
 }
 
 /* ==========================================
-   Buttons
+   ROOM OVERVIEW
+========================================== */
+function renderRooms(rooms) {
+
+    const container =
+        findOverviewContainer(
+            "Room Overview"
+        );
+
+    if (!container) {
+
+        console.warn(
+            "Room Overview container not found"
+        );
+
+        return;
+
+    }
+
+
+    if (rooms.length === 0) {
+
+        container.innerHTML = `
+            <div class="empty-state">
+                No rooms available
+            </div>
+        `;
+
+        return;
+
+    }
+
+
+    container.innerHTML = `
+
+        <div class="room-list">
+
+            ${rooms.map(room => {
+
+                const roomNumber =
+                    room.roomNumber ||
+                    room.name ||
+                    "Room";
+
+
+                const capacity =
+                    room.maxCapacity ||
+                    room.capacity ||
+                    0;
+
+
+                const status =
+                    room.isActive === false
+                        ? "Inactive"
+                        : "Active";
+
+
+                return `
+
+                    <div class="dashboard-item">
+
+                        <div>
+
+                            <strong>
+                                Room ${roomNumber}
+                            </strong>
+
+                            <span>
+                                Capacity: ${capacity}
+                            </span>
+
+                        </div>
+
+                        <span class="room-status">
+                            ${status}
+                        </span>
+
+                    </div>
+
+                `;
+
+            }).join("")}
+
+        </div>
+
+    `;
+
+}
+
+/* ==========================================
+   EXAMINATION OVERVIEW
 ========================================== */
 
-function initializeButtons(){
+function renderExams(exams) {
 
-    const routes={
+    const container =
+        document.getElementById(
+            "examOverview"
+        );
 
-        createExamBtn:"create-exam.html",
+    if (!container) return;
 
-        uploadExcelBtn:"students.html",
 
-        manualEntryBtn:"students.html",
+    if (exams.length === 0) {
 
-        manageRoomsBtn:"rooms.html",
+        container.innerHTML = `
+            <div class="empty-state">
+                No examinations created
+            </div>
+        `;
 
-        generateBtn:"seating-generator.html",
+        return;
 
-        reportBtn:"reports.html"
+    }
+
+
+    container.innerHTML =
+        exams
+            .slice()
+            .reverse()
+            .slice(0, 5)
+            .map(exam => {
+
+                return `
+
+                    <div class="dashboard-item">
+
+                        <div>
+
+                            <strong>
+                                ${exam.examName || "Examination"}
+                            </strong>
+
+                            <span>
+                                ${exam.subjectName || ""}
+                            </span>
+
+                        </div>
+
+                        <span>
+                            ${formatDate(exam.examDate)}
+                        </span>
+
+                    </div>
+
+                `;
+
+            }).join("");
+
+}
+
+
+/* ==========================================
+   DATE FORMAT
+========================================== */
+
+function formatDate(date) {
+
+    if (!date) return "-";
+
+
+    const d =
+        new Date(date);
+
+
+    if (isNaN(d.getTime())) {
+
+        return date;
+
+    }
+
+
+    return d.toLocaleDateString(
+        "en-GB",
+        {
+            day: "2-digit",
+            month: "short",
+            year: "numeric"
+        }
+    );
+
+}
+
+/* ==========================================
+   FIND DASHBOARD OVERVIEW CONTAINER
+========================================== */
+
+function findOverviewContainer(title) {
+
+    const cards =
+        document.querySelectorAll(".dashboard-card");
+
+    for (const card of cards) {
+
+        const heading =
+            card.querySelector("h4");
+
+        if (
+            heading &&
+            heading.textContent
+                .trim()
+                .toLowerCase()
+                .includes(title.toLowerCase())
+        ) {
+
+            /*
+             Find the element containing
+             the loading message.
+            */
+
+            const elements =
+                card.querySelectorAll("*");
+
+            for (const element of elements) {
+
+                if (
+                    element.children.length === 0 &&
+                    element.textContent
+                        .trim()
+                        .toLowerCase()
+                        .includes("loading")
+                ) {
+
+                    return element;
+
+                }
+
+            }
+
+            /*
+             If no loading element exists,
+             use the card itself.
+            */
+
+            return card;
+
+        }
+
+    }
+
+    return null;
+
+}
+/* ==========================================
+   ERROR
+========================================== */
+
+function showDashboardError(message) {
+
+    console.error(message);
+
+}
+
+
+/* ==========================================
+   QUICK ACTIONS
+========================================== */
+
+function initializeButtons() {
+
+    const routes = {
+
+        createExamBtn:
+            "create-exam.html",
+
+        uploadExcelBtn:
+            "nominal-roll.html",
+
+        manualEntryBtn:
+            "students.html",
+
+        manageRoomsBtn:
+            "rooms.html",
+
+        generateBtn:
+            "seating-generator.html",
+
+        reportBtn:
+            "reports.html"
 
     };
 
-    Object.keys(routes).forEach(id=>{
 
-        const btn=
+    Object.keys(routes).forEach(id => {
 
-        document.getElementById(id);
+        const button =
+            document.getElementById(id);
 
-        if(btn){
 
-            btn.onclick=()=>{
+        if (button) {
 
-                window.location.href=
+            button.onclick = () => {
 
-                routes[id];
+                window.location.href =
+                    routes[id];
 
             };
 
@@ -154,157 +724,7 @@ function initializeButtons(){
 
 }
 
-console.log("✅ Dashboard Loaded");
 
-let departmentChart;
-let capacityChart;
-
-function loadCharts(){
-
-    const departmentCanvas =
-    document.getElementById("departmentChart");
-
-    const capacityCanvas =
-    document.getElementById("capacityChart");
-
-    if(!departmentCanvas || !capacityCanvas){
-
-        return;
-
-    }
-
-    const students =
-    StorageManager.getStudents();
-
-    const rooms =
-    StorageManager.getRooms();
-
-    const departments = {};
-
-    students.forEach(student=>{
-
-        departments[student.department] =
-
-        (departments[student.department] || 0) + 1;
-
-    });
-
-    if(departmentChart){
-
-        departmentChart.destroy();
-
-    }
-
-    if(capacityChart){
-
-        capacityChart.destroy();
-
-    }
-
-    departmentChart = new Chart(
-
-        departmentCanvas,
-
-        {
-
-            type:"bar",
-
-            data:{
-
-                labels:Object.keys(departments),
-
-                datasets:[{
-
-                    label:"Students",
-
-                    data:Object.values(departments),
-
-                    backgroundColor:"#1D8EF7",
-
-                    borderRadius:8
-
-                }]
-
-            },
-
-            options:{
-
-                responsive:true,
-
-                plugins:{
-
-                    legend:{
-
-                        display:false
-
-                    }
-
-                }
-
-            }
-
-        }
-
-    );
-
-    const roomLabels = [];
-
-    const capacities = [];
-
-    rooms.forEach(room=>{
-
-        roomLabels.push(room.name);
-
-        capacities.push(Number(room.capacity));
-
-    });
-
-    capacityChart = new Chart(
-
-        capacityCanvas,
-
-        {
-
-            type:"doughnut",
-
-            data:{
-
-                labels:roomLabels,
-
-                datasets:[{
-
-                    data:capacities,
-
-                    backgroundColor:[
-
-                        "#1D8EF7",
-
-                        "#16C47F",
-
-                        "#FFC107",
-
-                        "#EF4444",
-
-                        "#6F42C1",
-
-                        "#20C997",
-
-                        "#0B2D5C"
-
-                    ]
-
-                }]
-
-            },
-
-            options:{
-
-                responsive:true
-
-            }
-
-        }
-
-    );
-
-}
+console.log(
+    "✅ SmartSeat Dashboard Loaded"
+);
