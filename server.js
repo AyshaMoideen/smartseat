@@ -12,6 +12,7 @@ const roomRoutes = require("./backend/routes/roomRoutes");
 const examRoutes = require("./backend/routes/examRoutes");
 const batchRoutes = require("./backend/routes/batchRoutes");
 const nominalRollRoutes = require("./backend/routes/nominalRollRoutes");
+const seatingRoutes = require("./backend/routes/seatingRoutes");
 
 dotenv.config();
 
@@ -29,6 +30,7 @@ app.use("/api/rooms", roomRoutes);
 app.use("/api/exams", examRoutes);
 app.use("/api/batches", batchRoutes);
 app.use("/api/nominal-rolls",nominalRollRoutes);
+app.use("/api/seating", seatingRoutes);
 
 // Serve Frontend
 app.use(express.static(path.join(__dirname, "frontend")));
@@ -40,6 +42,10 @@ app.get("/", (req, res) => {
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-    console.log(`🚀 Server running on http://localhost:${PORT}`);
-});
+if (require.main === module) {
+    app.listen(PORT, () => {
+        console.log(`🚀 Server running on http://localhost:${PORT}`);
+    });
+}
+
+module.exports = app;

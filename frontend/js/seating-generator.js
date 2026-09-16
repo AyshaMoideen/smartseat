@@ -20,6 +20,7 @@ const ROOMS_API =
 const STUDENTS_API =
     "http://localhost:5000/api/students";
 
+const SEATING_API = "http://localhost:5000/api/seating";
 
 /* ==========================================
    DATA
@@ -1539,6 +1540,53 @@ function wait(
 
 }
 
+async function saveSeatingToDatabase() {
+    if (!selectedExam || !selectedExam._id) {
+        console.error("❌ No selected exam found.");
+        return false;
+    }
+
+    if (!Array.isArray(seating)) {
+        console.error("❌ Seating data is invalid.");
+        return false;
+    }
+
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+        console.error("❌ Teacher authentication token not found.");
+        return false;
+    }
+
+    try {
+        const response = await fetch(`${SEATING_API}/save`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                examId: selectedExam._id,
+                seating: seating
+            })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            console.error("❌ Failed to save seating:", data);
+            return false;
+        }
+
+        console.log("✅ Seating saved to MongoDB.");
+
+        return true;
+
+    } catch (error) {
+        console.error("❌ Seating database error:", error);
+        return false;
+    }
+}
 
 /* ==========================================
    GENERATE SEATING
@@ -1827,14 +1875,8 @@ async function generateSeating() {
 
 
         updateStatistics();
-
         renderSeatingTable();
-        /* ==========================================
-   SAVE GENERATED REPORT DATA
-========================================== */
-
-saveGeneratedReportData();
-
+        saveGeneratedReportData();
 
         await showAlert(
             "Allocation Error",
@@ -1896,15 +1938,16 @@ saveGeneratedReportData();
 
     updateStatistics();
 
-renderSeatingTable();
-
+    renderSeatingTable();
 
 /* --------------------------------------
    SAVE REPORT DATA
 -------------------------------------- */
 
-saveGeneratedReportData();
+    saveGeneratedReportData();
 
+// Save seating to MongoDB
+    await saveSeatingToDatabase();
 
 /* --------------------------------------
    SUCCESS POPUP
