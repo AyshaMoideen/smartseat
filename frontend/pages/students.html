@@ -316,7 +316,7 @@ Export Students
 </div>
 
 <!-- ==========================================
-     SEARCH + DEPARTMENT FILTER
+     SEARCH + BATCH + SEMESTER + DEPARTMENT
 ========================================== -->
 
 <div class="student-filter-row">
@@ -334,6 +334,40 @@ Export Students
                 placeholder="Search by Register Number, Name or Department">
 
         </div>
+
+    </div>
+
+
+    <!-- Batch -->
+
+    <div class="student-batch-wrapper">
+
+        <select
+            id="batchFilter"
+            class="form-select">
+
+            <option value="">
+                All Batches
+            </option>
+
+        </select>
+
+    </div>
+
+
+    <!-- Semester -->
+
+    <div class="student-semester-wrapper">
+
+        <select
+            id="semesterFilter"
+            class="form-select">
+
+            <option value="">
+                All Semesters
+            </option>
+
+        </select>
 
     </div>
 
@@ -366,6 +400,10 @@ Export Students
                 BBA.TTM
             </option>
 
+            <option value="BBA.HA">
+                BBA.HA
+            </option>
+
             <option value="BCOM.CA">
                 BCOM.CA
             </option>
@@ -379,34 +417,40 @@ Export Students
     </div>
 
 </div>
+<!-- =========================
+     Student List
+========================= -->
 
-<!-- Student Table -->
+<div class="student-table-card mt-4">
 
-<div class="table-responsive">
+    <div class="table-responsive">
 
-<table class="table table-hover">
+        <table class="table align-middle">
 
-<thead>
+            <thead>
 
-<tr>
-    <th>S.No.</th>
-    <th>Register No</th>
-    <th>Name</th>
-    <th>Department</th>
-    <th>Semester</th>
-    <th>Action</th>
-</tr>
+                <tr>
+                    <th>S.No.</th>
+                    <th>Register No</th>
+                    <th>Name</th>
+                    <th>Department</th>
+                    <th>Semester</th>
+                    <th>Action</th>
+                </tr>
 
-</thead>
+            </thead>
 
-<tbody id="studentTable">
+            <tbody id="studentTable">
 
-</tbody>
+                <!-- Students will be loaded here by students.js -->
 
-</table>
+            </tbody>
+
+        </table>
+
+    </div>
 
 </div>
-
 <!-- =========================
      Excel Upload
 ========================= -->
@@ -468,36 +512,68 @@ Export Students
 
         <div class="d-flex flex-wrap gap-3 mt-4">
 
-            <button
-                id="uploadExcelBtn"
-                class="btn btn-success">
+            <div class="d-flex flex-wrap gap-3 mt-4">
 
-                <i class="bi bi-upload"></i>
+    <button
+        id="uploadExcelBtn"
+        class="btn btn-success">
 
-                Upload Students
+        <i class="bi bi-upload"></i>
 
-            </button>
+        Upload Students
 
-            <button
-                id="downloadSampleBtn"
-                class="btn btn-outline-primary">
+    </button>
 
-                <i class="bi bi-download"></i>
 
-                Download Sample Excel
+    <button
+        id="downloadSampleBtn"
+        class="btn btn-outline-primary">
 
-            </button>
+        <i class="bi bi-download"></i>
 
-            <button
-                id="clearStudentsBtn"
-                class="btn btn-outline-danger">
+        Download Sample Excel
 
-                <i class="bi bi-trash3-fill"></i>
+    </button>
 
-                Clear All Students
 
-            </button>
+    <!-- ==========================================
+         ASSIGN EXISTING STUDENTS TO BATCH
+    =========================================== -->
 
+    <select
+        id="assignBatchSelect"
+        class="form-select"
+        style="width:220px;">
+
+        <option value="">
+            Select Batch
+        </option>
+
+    </select>
+
+
+    <button
+        id="assignBatchBtn"
+        class="btn btn-outline-primary">
+
+        <i class="bi bi-link-45deg"></i>
+
+        Assign Batch
+
+    </button>
+
+
+    <button
+        id="clearStudentsBtn"
+        class="btn btn-outline-danger">
+
+        <i class="bi bi-trash3-fill"></i>
+
+        Clear All Students
+
+    </button>
+
+</div>
         </div>
 
     </div>
@@ -525,8 +601,6 @@ Export Students
 <script src="../js/layout.js"></script>
 
 <script src="../js/alert-manager.js"></script>
-
-<script src="../js/students.js"></script>
 
 </body>
 

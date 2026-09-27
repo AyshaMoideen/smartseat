@@ -29,7 +29,7 @@ rel="stylesheet">
 href="../css/layout.css">
 
 <link rel="stylesheet"
-href="../css/exams.css">
+href="../css/create-exam.css">
 
 </head>
 
@@ -214,6 +214,7 @@ href="../css/exams.css">
             </table>
 
         </div>
+
 <!-- ===========================
      Exam Modal
 =========================== -->
@@ -223,9 +224,13 @@ href="../css/exams.css">
     id="examModal"
     tabindex="-1">
 
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-xl">
 
         <div class="modal-content">
+
+            <!-- ===========================
+                 Modal Header
+            =========================== -->
 
             <div class="modal-header">
 
@@ -238,6 +243,7 @@ href="../css/exams.css">
                 </h4>
 
                 <button
+                    type="button"
                     class="btn-close"
                     data-bs-dismiss="modal">
 
@@ -245,13 +251,21 @@ href="../css/exams.css">
 
             </div>
 
+
+            <!-- ===========================
+                 Modal Body
+            =========================== -->
+
             <div class="modal-body">
 
-                <!-- Exam Name -->
+                <!-- ===========================
+                     Exam Name
+                =========================== -->
 
                 <div class="mb-3">
 
-                    <label class="form-label">
+                    <label
+                        class="form-label">
 
                         Exam Name
 
@@ -265,78 +279,19 @@ href="../css/exams.css">
 
                 </div>
 
-                <!-- Subject Details -->
+
+                <!-- ===========================
+                     Date / Session / Time
+                =========================== -->
 
                 <div class="row">
 
-                    <div class="col-md-6">
+                    <!-- Exam Date -->
 
-                        <label class="form-label">
+                    <div class="col-md-3">
 
-                            Subject Code
-
-                        </label>
-
-                        <input
-                            type="text"
-                            id="subjectCode"
-                            class="form-control"
-                            placeholder="Example: CSC301">
-
-                    </div>
-
-                    <div class="col-md-6">
-
-                        <label class="form-label">
-
-                            Subject Name
-
-                        </label>
-
-                        <input
-                            type="text"
-                            id="subjectName"
-                            class="form-control"
-                            placeholder="Example: Database Management System">
-
-                    </div>
-
-                </div>
-
-                <br>
-
-                <!-- Semester / Date / Session -->
-
-                <div class="row">
-
-                    <div class="col-md-4">
-
-                        <label class="form-label">
-
-                            Semester
-
-                        </label>
-
-                        <select
-                            id="semester"
-                            class="form-select">
-
-                            <option value="1">Semester 1</option>
-                            <option value="2">Semester 2</option>
-                            <option value="3">Semester 3</option>
-                            <option value="4">Semester 4</option>
-                            <option value="5">Semester 5</option>
-                            <option value="6">Semester 6</option>
-                            <option value="7">Semester 7</option>
-                            <option value="8">Semester 8</option>
-
-                        </select>
-
-                    </div>
-
-                    <div class="col-md-4">
-
-                        <label class="form-label">
+                        <label
+                            class="form-label">
 
                             Exam Date
 
@@ -349,9 +304,13 @@ href="../css/exams.css">
 
                     </div>
 
-                    <div class="col-md-4">
 
-                        <label class="form-label">
+                    <!-- Session -->
+
+                    <div class="col-md-3">
+
+                        <label
+                            class="form-label">
 
                             Session
 
@@ -362,128 +321,198 @@ href="../css/exams.css">
                             class="form-select">
 
                             <option value="Morning">
-
                                 Morning
-
                             </option>
 
                             <option value="Afternoon">
-
                                 Afternoon
-
                             </option>
 
                         </select>
 
                     </div>
 
-                </div>
 
-                <br>
+                    <!-- Start Time -->
 
-                <!-- Departments -->
+                    <div class="col-md-3">
 
-                <div class="mb-3">
+                        <label
+                            class="form-label">
 
-                    <label class="form-label">
+                            Start Time
 
-                        Departments
+                        </label>
 
-                    </label>
+                        <input
+                            type="time"
+                            id="startTime"
+                            class="form-control">
 
-                    <div class="row">
+                    </div>
 
-                        <div class="col-md-6">
 
-                            <div class="form-check">
+                    <!-- End Time -->
 
-                                <input
-                                    class="form-check-input department"
-                                    type="checkbox"
-                                    value="BSc CS"
-                                    id="deptCS">
+                    <div class="col-md-3">
 
-                                <label
-                                    class="form-check-label"
-                                    for="deptCS">
+                        <label
+                            class="form-label">
 
-                                    BSc Computer Science
+                            End Time
 
-                                </label>
+                        </label>
 
-                            </div>
-
-                            <div class="form-check">
-
-                                <input
-                                    class="form-check-input department"
-                                    type="checkbox"
-                                    value="BCA"
-                                    id="deptBCA">
-
-                                <label
-                                    class="form-check-label"
-                                    for="deptBCA">
-
-                                    BCA
-
-                                </label>
-
-                            </div>
-
-                        </div>
-
-                        <div class="col-md-6">
-
-                            <div class="form-check">
-
-                                <input
-                                    class="form-check-input department"
-                                    type="checkbox"
-                                    value="BCom"
-                                    id="deptBCom">
-
-                                <label
-                                    class="form-check-label"
-                                    for="deptBCom">
-
-                                    BCom
-
-                                </label>
-
-                            </div>
-
-                            <div class="form-check">
-
-                                <input
-                                    class="form-check-input department"
-                                    type="checkbox"
-                                    value="BA"
-                                    id="deptBA">
-
-                                <label
-                                    class="form-check-label"
-                                    for="deptBA">
-
-                                    BA
-
-                                </label>
-
-                            </div>
-
-                        </div>
+                        <input
+                            type="time"
+                            id="endTime"
+                            class="form-control">
 
                     </div>
 
                 </div>
 
-                <!-- Duration & Status -->
+
+                <br>
+
+
+                <!-- ===========================
+                     Participating Batches
+                =========================== -->
+
+                <div class="mb-4">
+
+                    <div
+                        class="d-flex justify-content-between align-items-center mb-2">
+
+                        <label
+                            class="form-label mb-0">
+
+                            Participating Batches & Semesters
+
+                        </label>
+
+                        <button
+                            type="button"
+                            id="addSemesterBtn"
+                            class="btn btn-sm btn-outline-primary">
+
+                            <i class="bi bi-plus-circle"></i>
+
+                            Add Batch / Semester
+
+                        </button>
+
+                    </div>
+
+
+                    <div
+                        id="participatingSemesterContainer">
+
+                        <!-- Rows will be added by exam.js -->
+
+                    </div>
+
+                </div>
+
+
+                <!-- ===========================
+                     Examination Subjects
+                =========================== -->
+
+                <div class="mb-4">
+
+                    <div
+                        class="d-flex justify-content-between align-items-center mb-2">
+
+                        <label
+                            class="form-label mb-0">
+
+                            Examination Subjects
+
+                        </label>
+
+                        <button
+                            type="button"
+                            id="addSubjectBtn"
+                            class="btn btn-sm btn-outline-primary">
+
+                            <i class="bi bi-plus-circle"></i>
+
+                            Add Subject
+
+                        </button>
+
+                    </div>
+
+
+                    <div
+                        class="table-responsive">
+
+                        <table
+                            class="table table-bordered align-middle">
+
+                            <thead>
+
+                                <tr>
+
+                                    <th>
+                                        Batch
+                                    </th>
+
+                                    <th>
+                                        Semester
+                                    </th>
+
+                                    <th>
+                                        Department
+                                    </th>
+
+                                    <th>
+                                        Subject Code
+                                    </th>
+
+                                    <th>
+                                        Subject Name
+                                    </th>
+
+                                    <th
+                                        style="width: 70px;">
+
+                                        Action
+
+                                    </th>
+
+                                </tr>
+
+                            </thead>
+
+                            <tbody
+                                id="subjectContainer">
+
+                                <!-- Subject rows added by exam.js -->
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </div>
+
+
+                <!-- ===========================
+                     Duration / Status
+                =========================== -->
 
                 <div class="row">
 
+                    <!-- Duration -->
+
                     <div class="col-md-6">
 
-                        <label class="form-label">
+                        <label
+                            class="form-label">
 
                             Duration
 
@@ -493,17 +522,33 @@ href="../css/exams.css">
                             id="duration"
                             class="form-select">
 
-                            <option value="1 Hour">1 Hour</option>
-                            <option value="2 Hours">2 Hours</option>
-                            <option value="3 Hours" selected>3 Hours</option>
+                            <option value="1 Hour">
+                                1 Hour
+                            </option>
+
+                            <option
+                                value="2 Hours"
+                                selected>
+
+                                2 Hours
+
+                            </option>
+
+                            <option value="3 Hours">
+                                3 Hours
+                            </option>
 
                         </select>
 
                     </div>
 
+
+                    <!-- Status -->
+
                     <div class="col-md-6">
 
-                        <label class="form-label">
+                        <label
+                            class="form-label">
 
                             Status
 
@@ -513,7 +558,9 @@ href="../css/exams.css">
                             id="examStatus"
                             class="form-select">
 
-                            <option value="true" selected>
+                            <option
+                                value="true"
+                                selected>
 
                                 Active
 
@@ -533,9 +580,15 @@ href="../css/exams.css">
 
             </div>
 
+
+            <!-- ===========================
+                 Modal Footer
+            =========================== -->
+
             <div class="modal-footer">
 
                 <button
+                    type="button"
                     class="btn btn-secondary"
                     data-bs-dismiss="modal">
 
@@ -544,6 +597,7 @@ href="../css/exams.css">
                 </button>
 
                 <button
+                    type="button"
                     id="saveExamBtn"
                     class="btn btn-primary">
 
@@ -558,6 +612,7 @@ href="../css/exams.css">
     </div>
 
 </div>
+
 <!-- ===========================
      Exam Summary
 =========================== -->
@@ -686,8 +741,9 @@ href="../css/exams.css">
 
 <script src="../js/alert-manager.js"></script>
 
-<script src="../js/exams.js"></script>
+<script src="../js/exam.js"></script>
 
 </body>
 
 </html>
+

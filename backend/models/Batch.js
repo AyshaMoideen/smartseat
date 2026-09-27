@@ -27,6 +27,13 @@ const batchSchema = new mongoose.Schema(
             required: true
         },
 
+        currentSemester: {
+            type: Number,
+            required: true,
+            min: 1,
+            max: 6
+        },
+
         isActive: {
             type: Boolean,
             default: true
@@ -38,3 +45,4 @@ const batchSchema = new mongoose.Schema(
 );
 
 module.exports = mongoose.model("Batch", batchSchema);
+

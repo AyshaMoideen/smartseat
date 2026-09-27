@@ -67,6 +67,8 @@ addBatchBtn.addEventListener("click", () => {
 
     document.getElementById("endYear").value = "";
 
+    document.getElementById("currentSemester").value = "";
+
     document.getElementById("batchStatus").value = "true";
 
 
@@ -334,7 +336,7 @@ function renderBatches(data = batches) {
 
                 <!-- Actions -->
 
-                <td>
+               <td>
 
     <!-- Edit -->
 
@@ -344,6 +346,19 @@ function renderBatches(data = batches) {
         title="Edit Batch">
 
         <i class="bi bi-pencil-fill"></i>
+
+    </button>
+
+
+    <!-- Next Semester -->
+
+    <button
+        class="btn btn-primary btn-sm me-2"
+        onclick="moveToNextSemester('${batch._id}')"
+        title="Move to Next Semester"
+        ${batch.currentSemester >= 6 ? "disabled" : ""}>
+
+        <i class="bi bi-arrow-right-circle-fill"></i>
 
     </button>
 
@@ -375,7 +390,7 @@ function renderBatches(data = batches) {
 
     </button>
 
-</td>
+</td> 
 
             </tr>
 
@@ -428,75 +443,40 @@ function updateStatistics() {
     ).textContent = inactive;
 
 
-    /* ======================================
-       CURRENT BATCH
-    ====================================== */
+/* ======================================
+   FIRST YEAR BATCH
+====================================== */
 
-    let currentBatch = "—";
+let firstYearBatch = "—";
 
+if (batches.length > 0) {
 
-    if (batches.length > 0) {
+    const activeBatches =
+        batches.filter(
+            batch => batch.isActive
+        );
 
-        const activeBatches =
-            batches.filter(
-                batch => batch.isActive
-            );
+    const firstYear =
+        activeBatches.find(
+            batch => batch.currentSemester <= 2
+        );
 
+    if (firstYear) {
 
-        if (activeBatches.length > 0) {
-
-            const latest =
-                activeBatches.reduce(
-                    (latest, batch) =>
-                        batch.startYear >
-                        latest.startYear
-                            ? batch
-                            : latest
-                );
-
-            currentBatch =
-                latest.batchName;
-
-        }
+        firstYearBatch =
+            firstYear.batchName;
 
     }
 
-
-    document.getElementById(
-        "currentBatch"
-    ).textContent =
-        currentBatch;
-
-
-    /* ======================================
-       SUMMARY
-    ====================================== */
-
-    document.getElementById(
-        "summaryBatches"
-    ).textContent =
-        total;
-
-
-    document.getElementById(
-        "summaryActive"
-    ).textContent =
-        active;
-
-
-    document.getElementById(
-        "summaryInactive"
-    ).textContent =
-        inactive;
-
-
-    document.getElementById(
-        "summaryCurrent"
-    ).textContent =
-        currentBatch;
-
 }
 
+
+document.getElementById(
+    "currentBatch"
+).textContent =
+    firstYearBatch;
+
+}
 
 /* ==========================================
    INITIAL LOAD
@@ -540,6 +520,9 @@ saveBatchBtn.addEventListener("click", async () => {
     const endYear =
         Number(document.getElementById("endYear").value);
 
+    const currentSemester =
+        Number(document.getElementById("currentSemester").value);    
+
     const isActive =
         document.getElementById("batchStatus").value === "true";
 
@@ -552,7 +535,8 @@ saveBatchBtn.addEventListener("click", async () => {
         !batchName ||
         !prefix ||
         !startYear ||
-        !endYear
+        !endYear ||
+        !currentSemester
     ) {
 
         AlertManager.error(
@@ -653,6 +637,7 @@ if (editingBatchId) {
                     prefix,
                     startYear,
                     endYear,
+                    currentSemester,
                     isActive
 
                 })
@@ -803,6 +788,8 @@ if (editingBatchId) {
                 startYear,
 
                 endYear,
+
+                currentSemester,
 
                 isActive
 
@@ -980,6 +967,8 @@ function editBatch(batchId) {
     document.getElementById("endYear").value =
         batch.endYear;
 
+    document.getElementById("currentSemester").value =
+    batch.currentSemester || "";
 
     document.getElementById("batchStatus").value =
         String(batch.isActive);
@@ -1320,6 +1309,133 @@ async function deleteBatch(batchId) {
 
         );
 
+    }
+
+}
+
+/* ==========================================
+   MOVE BATCH TO NEXT SEMESTER
+========================================== */
+
+async function moveToNextSemester(batchId) {
+
+    const batch =
+        batches.find(
+            batch => batch._id === batchId
+        );
+
+    if (!batch) {
+
+        showAlert(
+            "Batch not found.",
+            "danger"
+        );
+
+        return;
+
+    }
+
+
+    /* ======================================
+       FINAL SEMESTER CHECK
+    ====================================== */
+
+    if (batch.currentSemester >= 6) {
+
+        showAlert(
+            "This batch has already completed Semester 6.",
+            "warning"
+        );
+
+        return;
+
+    }
+
+
+    const oldSemester =
+        batch.currentSemester;
+
+    const newSemester =
+        oldSemester + 1;
+
+
+    /* ======================================
+       CONFIRMATION
+    ====================================== */
+
+    const confirmed =
+        confirm(
+            `Move ${batch.batchName} from Semester ${oldSemester} to Semester ${newSemester}?\n\n` +
+            `This will also update all students belonging to this batch.`
+        );
+
+    if (!confirmed) {
+
+        return;
+
+    }
+
+
+    try {
+
+        const response =
+    await fetch(
+        `${API_URL}/${batchId}/next-semester`,
+        {
+            method: "PUT",
+
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization":
+                    `Bearer ${localStorage.getItem("token")}`
+            }
+        }
+    );
+
+
+        const data =
+            await response.json();
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                data.message ||
+                "Failed to move batch."
+            );
+
+        }
+
+
+        /* ==================================
+   SUCCESS
+================================== */
+
+AlertManager.success(
+    "Semester Updated",
+    `${batch.batchName} moved from Semester ${oldSemester} to Semester ${newSemester}. ${data.studentsUpdated} students updated.`
+);
+
+
+        /* ==================================
+           REFRESH BATCH DATA
+        ================================== */
+
+        await loadBatches();
+
+
+    } catch (error) {
+
+        console.error(
+            "Move semester error:",
+            error
+        );
+
+        AlertManager.error(
+    "Semester Update Failed",
+    error.message ||
+    "Failed to move batch to next semester."
+);
     }
 
 }

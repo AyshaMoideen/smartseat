@@ -1,245 +1,210 @@
 const Exam = require("../models/Exam");
-
+const Batch = require("../models/Batch");
 
 // ==========================================
-// NORMALIZE SUBJECT NAME
+// VALIDATE PARTICIPATING SEMESTERS
 // ==========================================
 
-function normalizeSubjectName(name) {
+function validateParticipatingSemesters(data) {
 
-    return String(name || "")
-        .trim()
-        .replace(/\s+/g, " ")
-        .toLowerCase();
+    if (
+        !Array.isArray(data) ||
+        data.length === 0
+    ) {
+        return {
+            valid: false,
+            message:
+                "Please select at least one batch and semester."
+        };
+    }
 
+    const combinations = new Set();
+
+    for (const item of data) {
+
+        if (!item.batch) {
+            return {
+                valid: false,
+                message:
+                    "Every participating semester must have a batch."
+            };
+        }
+
+        const semester = Number(item.semester);
+
+        if (
+            !Number.isInteger(semester) ||
+            semester < 1 ||
+            semester > 6
+        ) {
+            return {
+                valid: false,
+                message:
+                    "Semester must be between 1 and 6."
+            };
+        }
+
+        const key =
+            `${item.batch}_${semester}`;
+
+        if (combinations.has(key)) {
+            return {
+                valid: false,
+                message:
+                    "The same batch and semester has been added more than once."
+            };
+        }
+
+        combinations.add(key);
+    }
+
+    return {
+        valid: true
+    };
 }
 
 
 // ==========================================
-// BUILD SUBJECTS
-// ==========================================
-//
-// Frontend sends:
-//
-// [
-//   {
-//      department: "BCA",
-//      subjectCode: "CS501",
-//      subjectName: "Data Structures"
-//   },
-//   {
-//      department: "BBA TTM",
-//      subjectCode: "",
-//      subjectName: "Marketing"
-//   },
-//   {
-//      department: "BBA AH",
-//      subjectCode: "",
-//      subjectName: "Marketing"
-//   }
-// ]
-//
-// Backend converts it into:
-//
-// [
-//   {
-//      subjectCode: "CS501",
-//      subjectName: "Data Structures",
-//      departments: ["BCA"]
-//   },
-//   {
-//      subjectCode: "",
-//      subjectName: "Marketing",
-//      departments: ["BBA TTM", "BBA AH"]
-//   }
-// ]
-//
+// VALIDATE SUBJECTS
 // ==========================================
 
-function buildSubjects(departmentSubjects) {
+function validateSubjects(subjects, participatingSemesters) {
 
-    const subjectMap = new Map();
+    if (
+        !Array.isArray(subjects) ||
+        subjects.length === 0
+    ) {
+        return {
+            valid: false,
+            message:
+                "Please add at least one examination subject."
+        };
+    }
 
+    const validCombinations =
+        new Set(
+            participatingSemesters.map(item =>
+                `${item.batch}_${Number(item.semester)}`
+            )
+        );
 
-    departmentSubjects.forEach(item => {
+    const subjectKeys = new Set();
+
+    for (const subject of subjects) {
+
+        const batch =
+            String(subject.batch || "").trim();
+
+        const semester =
+            Number(subject.semester);
 
         const department =
-            String(item.department || "")
-                .trim();
-
+            String(subject.department || "")
+                .trim()
+                .toUpperCase();
 
         const subjectName =
-            String(item.subjectName || "")
-                .trim()
-                .replace(/\s+/g, " ");
-
+            String(subject.subjectName || "")
+                .trim();
 
         const subjectCode =
-            String(item.subjectCode || "")
+            String(subject.subjectCode || "")
                 .trim()
                 .toUpperCase();
 
 
-        const key =
-            normalizeSubjectName(
-                subjectName
-            );
-
-
-        if (!key) {
-            return;
+        if (!batch) {
+            return {
+                valid: false,
+                message:
+                    "Every subject must have a batch."
+            };
         }
 
-
-        if (!subjectMap.has(key)) {
-
-            subjectMap.set(
-                key,
-                {
-                    subjectCode,
-                    subjectName,
-                    departments: []
-                }
-            );
-
-        }
-
-
-        const subject =
-            subjectMap.get(key);
-
-
-        // Add department only once
 
         if (
-            department &&
-            !subject.departments.includes(
-                department
-            )
+            !Number.isInteger(semester) ||
+            semester < 1 ||
+            semester > 6
         ) {
-
-            subject.departments.push(
-                department
-            );
-
+            return {
+                valid: false,
+                message:
+                    "Every subject must have a valid semester."
+            };
         }
-
-
-        // If first entry had no code,
-        // use a later available code.
-
-        if (
-            !subject.subjectCode &&
-            subjectCode
-        ) {
-
-            subject.subjectCode =
-                subjectCode;
-
-        }
-
-    });
-
-
-    return Array.from(
-        subjectMap.values()
-    );
-
-}
-
-
-// ==========================================
-// VALIDATE DEPARTMENT SUBJECTS
-// ==========================================
-
-function validateDepartmentSubjects(
-    departmentSubjects
-) {
-
-    if (
-        !Array.isArray(
-            departmentSubjects
-        ) ||
-        departmentSubjects.length === 0
-    ) {
-
-        return {
-            valid: false,
-            message:
-                "Please add at least one department and subject."
-        };
-
-    }
-
-
-    const departments = [];
-
-
-    for (
-        const item
-        of departmentSubjects
-    ) {
-
-        const department =
-            String(
-                item.department || ""
-            ).trim();
-
-
-        const subjectName =
-            String(
-                item.subjectName || ""
-            ).trim();
 
 
         if (!department) {
-
             return {
                 valid: false,
                 message:
                     "Every subject must have a department."
             };
-
         }
 
 
         if (!subjectName) {
-
             return {
                 valid: false,
                 message:
                     `Please enter the subject name for ${department}.`
             };
-
         }
 
 
-        if (
-            departments.includes(
-                department
-            )
-        ) {
+        // ----------------------------------
+        // Subject must belong to a selected
+        // batch + semester combination
+        // ----------------------------------
 
+        const combination =
+            `${batch}_${semester}`;
+
+        if (
+            !validCombinations.has(combination)
+        ) {
             return {
                 valid: false,
                 message:
-                    `${department} has been added more than once.`
+                    `${department} Semester ${semester} subject belongs to a batch/semester that was not selected.`
             };
-
         }
 
 
-        departments.push(
-            department
-        );
+        // ----------------------------------
+        // Prevent duplicate subject entry
+        // for same batch + semester +
+        // department
+        // ----------------------------------
 
+        const subjectKey =
+            `${batch}_${semester}_${department}`;
+
+        if (
+            subjectKeys.has(subjectKey)
+        ) {
+            return {
+                valid: false,
+                message:
+                    `${department} already has a subject for this batch and semester.`
+            };
+        }
+
+        subjectKeys.add(subjectKey);
+
+
+        subject.batch = batch;
+        subject.semester = semester;
+        subject.department = department;
+        subject.subjectCode = subjectCode;
+        subject.subjectName = subjectName;
     }
 
 
     return {
         valid: true
     };
-
 }
 
 
@@ -253,11 +218,11 @@ exports.addExam = async (req, res) => {
 
         const {
             examName,
-            semester,
             examDate,
             session,
             startTime,
             endTime,
+            participatingSemesters,
             subjects,
             duration,
             status
@@ -265,32 +230,14 @@ exports.addExam = async (req, res) => {
 
 
         // ----------------------------------
-        // Common Details Validation
+        // Common Details
         // ----------------------------------
 
-        if (!examName) {
+        if (!examName || !String(examName).trim()) {
 
             return res.status(400).json({
-
                 success: false,
-
-                message:
-                    "Exam name is required."
-
-            });
-
-        }
-
-
-        if (!semester) {
-
-            return res.status(400).json({
-
-                success: false,
-
-                message:
-                    "Semester is required."
-
+                message: "Exam name is required."
             });
 
         }
@@ -299,12 +246,8 @@ exports.addExam = async (req, res) => {
         if (!examDate) {
 
             return res.status(400).json({
-
                 success: false,
-
-                message:
-                    "Exam date is required."
-
+                message: "Exam date is required."
             });
 
         }
@@ -313,12 +256,8 @@ exports.addExam = async (req, res) => {
         if (!session) {
 
             return res.status(400).json({
-
                 success: false,
-
-                message:
-                    "Session is required."
-
+                message: "Session is required."
             });
 
         }
@@ -327,12 +266,8 @@ exports.addExam = async (req, res) => {
         if (!startTime) {
 
             return res.status(400).json({
-
                 success: false,
-
-                message:
-                    "Start time is required."
-
+                message: "Start time is required."
             });
 
         }
@@ -341,30 +276,72 @@ exports.addExam = async (req, res) => {
         if (!endTime) {
 
             return res.status(400).json({
-
                 success: false,
+                message: "End time is required."
+            });
 
+        }
+
+
+        if (endTime <= startTime) {
+
+            return res.status(400).json({
+                success: false,
                 message:
-                    "End time is required."
-
+                    "End time must be after start time."
             });
 
         }
 
 
         // ----------------------------------
-        // Time Validation
+        // Validate Participating Semesters
         // ----------------------------------
 
-        if (endTime <= startTime) {
+        const semesterValidation =
+            validateParticipatingSemesters(
+                participatingSemesters
+            );
+
+
+        if (!semesterValidation.valid) {
 
             return res.status(400).json({
-
                 success: false,
-
                 message:
-                    "End time must be after start time."
+                    semesterValidation.message
+            });
 
+        }
+
+
+        // ----------------------------------
+        // Verify Batch IDs
+        // ----------------------------------
+
+        const batchIds =
+            participatingSemesters.map(
+                item => item.batch
+            );
+
+
+        const batches =
+            await Batch.find({
+                _id: {
+                    $in: batchIds
+                }
+            });
+
+
+        if (
+            batches.length !==
+            batchIds.length
+        ) {
+
+            return res.status(400).json({
+                success: false,
+                message:
+                    "One or more selected batches could not be found."
             });
 
         }
@@ -374,32 +351,84 @@ exports.addExam = async (req, res) => {
         // Validate Subjects
         // ----------------------------------
 
-        const validation =
-            validateDepartmentSubjects(
-                subjects
+        const subjectValidation =
+            validateSubjects(
+                subjects,
+                participatingSemesters
             );
 
 
-        if (!validation.valid) {
+        if (!subjectValidation.valid) {
 
             return res.status(400).json({
-
                 success: false,
-
                 message:
-                    validation.message
-
+                    subjectValidation.message
             });
 
         }
 
 
         // ----------------------------------
-        // Build Common Subjects
+        // Create clean participating data
+        // ----------------------------------
+
+        const finalParticipatingSemesters =
+            participatingSemesters.map(item => {
+
+                const batch =
+                    batches.find(
+                        b =>
+                            b._id.toString() ===
+                            item.batch.toString()
+                    );
+
+                return {
+                    batch: batch._id,
+                    batchName: batch.batchName,
+                    semester: Number(item.semester)
+                };
+
+            });
+
+
+        // ----------------------------------
+        // Create clean subject data
         // ----------------------------------
 
         const finalSubjects =
-            buildSubjects(subjects);
+            subjects.map(subject => {
+
+                const batch =
+                    batches.find(
+                        b =>
+                            b._id.toString() ===
+                            subject.batch.toString()
+                    );
+
+                return {
+                    batch: batch._id,
+                    semester:
+                        Number(subject.semester),
+                    department:
+                        String(
+                            subject.department
+                        )
+                            .trim()
+                            .toUpperCase(),
+                    subjectCode:
+                        String(
+                            subject.subjectCode || ""
+                        )
+                            .trim()
+                            .toUpperCase(),
+                    subjectName:
+                        String(
+                            subject.subjectName
+                        ).trim()
+                };
+
+            });
 
 
         // ----------------------------------
@@ -410,11 +439,7 @@ exports.addExam = async (req, res) => {
             await Exam.create({
 
                 examName:
-                    examName
-                        .trim(),
-
-                semester:
-                    Number(semester),
+                    String(examName).trim(),
 
                 examDate:
                     new Date(examDate),
@@ -425,16 +450,18 @@ exports.addExam = async (req, res) => {
 
                 endTime,
 
+                participatingSemesters:
+                    finalParticipatingSemesters,
+
                 subjects:
                     finalSubjects,
 
                 duration:
-                    duration ||
-                    "1 Hour",
+                    duration || "1 Hour",
 
                 status:
                     status !== undefined
-                        ? status
+                        ? Boolean(status)
                         : true
 
             });
@@ -453,14 +480,12 @@ exports.addExam = async (req, res) => {
 
     }
 
-
     catch (error) {
 
         console.error(
             "Add Exam Error:",
             error
         );
-
 
         return res.status(500).json({
 
@@ -486,6 +511,14 @@ exports.getExams = async (req, res) => {
 
         const exams =
             await Exam.find()
+                .populate(
+                    "participatingSemesters.batch",
+                    "batchName prefix currentSemester"
+                )
+                .populate(
+                    "subjects.batch",
+                    "batchName prefix"
+                )
                 .sort({
                     examDate: 1,
                     startTime: 1
@@ -505,14 +538,12 @@ exports.getExams = async (req, res) => {
 
     }
 
-
     catch (error) {
 
         console.error(
             "Get Exams Error:",
             error
         );
-
 
         return res.status(500).json({
 
@@ -539,6 +570,14 @@ exports.getExamById = async (req, res) => {
         const exam =
             await Exam.findById(
                 req.params.id
+            )
+            .populate(
+                "participatingSemesters.batch",
+                "batchName prefix currentSemester"
+            )
+            .populate(
+                "subjects.batch",
+                "batchName prefix"
             );
 
 
@@ -566,14 +605,12 @@ exports.getExamById = async (req, res) => {
 
     }
 
-
     catch (error) {
 
         console.error(
             "Get Exam Error:",
             error
         );
-
 
         return res.status(500).json({
 
@@ -629,18 +666,6 @@ exports.updateExam = async (req, res) => {
                 String(
                     req.body.examName
                 ).trim();
-
-        }
-
-
-        if (
-            req.body.semester !== undefined
-        ) {
-
-            exam.semester =
-                Number(
-                    req.body.semester
-                );
 
         }
 
@@ -702,33 +727,158 @@ exports.updateExam = async (req, res) => {
         ) {
 
             exam.status =
-                req.body.status;
+                Boolean(req.body.status);
 
         }
 
 
         // ----------------------------------
-        // Update Subjects
+        // Participating Semesters
         // ----------------------------------
 
         if (
-            req.body.subjects !== undefined
+            req.body.participatingSemesters
+            !== undefined
         ) {
 
-            const validation =
-                validateDepartmentSubjects(
-                    req.body.subjects
+            const semesterValidation =
+                validateParticipatingSemesters(
+                    req.body.participatingSemesters
                 );
 
 
-            if (!validation.valid) {
+            if (!semesterValidation.valid) {
 
                 return res.status(400).json({
 
                     success: false,
 
                     message:
-                        validation.message
+                        semesterValidation.message
+
+                });
+
+            }
+
+
+            const batchIds =
+                req.body.participatingSemesters
+                    .map(item => item.batch);
+
+
+            const batches =
+                await Batch.find({
+                    _id: {
+                        $in: batchIds
+                    }
+                });
+
+
+            if (
+                batches.length !==
+                batchIds.length
+            ) {
+
+                return res.status(400).json({
+
+                    success: false,
+
+                    message:
+                        "One or more selected batches could not be found."
+
+                });
+
+            }
+
+
+            exam.participatingSemesters =
+                req.body.participatingSemesters
+                    .map(item => {
+
+                        const batch =
+                            batches.find(
+                                b =>
+                                    b._id.toString() ===
+                                    item.batch.toString()
+                            );
+
+                        return {
+                            batch: batch._id,
+                            batchName: batch.batchName,
+                            semester:
+                                Number(item.semester)
+                        };
+
+                    });
+
+        }
+
+
+        // ----------------------------------
+        // Subjects
+        // ----------------------------------
+
+        if (
+            req.body.subjects !== undefined
+        ) {
+
+            const participating =
+                req.body.participatingSemesters
+                !== undefined
+                    ? req.body.participatingSemesters
+                    : exam.participatingSemesters;
+
+
+            const subjectValidation =
+                validateSubjects(
+                    req.body.subjects,
+                    participating
+                );
+
+
+            if (!subjectValidation.valid) {
+
+                return res.status(400).json({
+
+                    success: false,
+
+                    message:
+                        subjectValidation.message
+
+                });
+
+            }
+
+
+            const batchIds =
+                req.body.subjects.map(
+                    item => item.batch
+                );
+
+
+            const batches =
+                await Batch.find({
+                    _id: {
+                        $in: batchIds
+                    }
+                });
+
+
+            if (
+                batches.length !==
+                new Set(
+                    batchIds.map(id =>
+                        id.toString()
+                    )
+                ).size
+            ) {
+
+                return res.status(400).json({
+
+                    success: false,
+
+                    message:
+                        "One or more subject batches could not be found."
 
                 });
 
@@ -736,15 +886,55 @@ exports.updateExam = async (req, res) => {
 
 
             exam.subjects =
-                buildSubjects(
-                    req.body.subjects
+                req.body.subjects.map(
+                    subject => {
+
+                        const batch =
+                            batches.find(
+                                b =>
+                                    b._id.toString() ===
+                                    subject.batch.toString()
+                            );
+
+                        return {
+
+                            batch:
+                                batch._id,
+
+                            semester:
+                                Number(
+                                    subject.semester
+                                ),
+
+                            department:
+                                String(
+                                    subject.department
+                                )
+                                    .trim()
+                                    .toUpperCase(),
+
+                            subjectCode:
+                                String(
+                                    subject.subjectCode || ""
+                                )
+                                    .trim()
+                                    .toUpperCase(),
+
+                            subjectName:
+                                String(
+                                    subject.subjectName
+                                ).trim()
+
+                        };
+
+                    }
                 );
 
         }
 
 
         // ----------------------------------
-        // Validate Time
+        // Time Validation
         // ----------------------------------
 
         if (
@@ -781,14 +971,12 @@ exports.updateExam = async (req, res) => {
 
     }
 
-
     catch (error) {
 
         console.error(
             "Update Exam Error:",
             error
         );
-
 
         return res.status(500).json({
 
@@ -848,14 +1036,12 @@ exports.deleteExam = async (req, res) => {
 
     }
 
-
     catch (error) {
 
         console.error(
             "Delete Exam Error:",
             error
         );
-
 
         return res.status(500).json({
 

@@ -13,7 +13,8 @@ const addStudent = async (req, res) => {
             name,
             department,
             semester,
-            section
+            section,
+            batch
         } = req.body;
 
         // Check duplicate register number
@@ -37,7 +38,8 @@ const addStudent = async (req, res) => {
             name,
             department,
             semester,
-            section
+            section,
+            batch
 
         });
 
@@ -75,9 +77,11 @@ const getStudents = async (req, res) => {
 
     try {
 
-        const students = await Student.find().sort({
-            createdAt: -1
-        });
+        const students = await Student.find()
+            .populate("batch")
+            .sort({
+                createdAt: -1
+            });
 
         res.status(200).json({
 
@@ -120,7 +124,8 @@ const updateStudent = async (req, res) => {
             name,
             department,
             semester,
-            section
+            section,
+            batch
         } = req.body;
 
 
@@ -176,6 +181,7 @@ const updateStudent = async (req, res) => {
         student.department = department;
         student.semester = semester;
         student.section = section;
+        student.batch = batch;
 
 
         await student.save();
@@ -276,7 +282,251 @@ const deleteStudent = async (req, res) => {
 
 };
 
+// =======================================
+// ASSIGN EXISTING STUDENTS TO BATCH
+// =======================================
 
+const assignStudentsToBatch = async (req, res) => {
+
+    try {
+
+        const { batchId } = req.body;
+
+        if (!batchId) {
+
+            return res.status(400).json({
+
+                success: false,
+                message: "Batch ID is required."
+
+            });
+
+        }
+
+        const Batch = require("../models/Batch");
+
+        const batch = await Batch.findById(batchId);
+
+        if (!batch) {
+
+            return res.status(404).json({
+
+                success: false,
+                message: "Batch not found."
+
+            });
+
+        }
+
+        const result = await Student.updateMany(
+
+            {
+                batch: null
+            },
+
+            {
+                $set: {
+                    batch: batch._id
+                }
+            }
+
+        );
+
+        res.status(200).json({
+
+            success: true,
+
+            message:
+                `Students assigned to ${batch.batchName} successfully.`,
+
+            studentsUpdated:
+                result.modifiedCount
+
+        });
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Assign students to batch error:",
+            error
+        );
+
+        res.status(500).json({
+
+            success: false,
+
+            message:
+                error.message ||
+                "Failed to assign students to batch."
+
+        });
+
+    }
+
+};
+// =======================================
+// FIX REGISTER PREFIX FOR A BATCH
+// =======================================
+
+const fixBatchRegisterPrefixes = async (req, res) => {
+
+    try {
+
+        const { batchId } = req.params;
+
+        const Batch = require("../models/Batch");
+
+        // Find batch
+        const batch = await Batch.findById(batchId);
+
+        if (!batch) {
+
+            return res.status(404).json({
+                success: false,
+                message: "Batch not found."
+            });
+
+        }
+
+        const correctPrefix =
+            String(batch.prefix || "")
+                .trim()
+                .toUpperCase()
+                .replace(/\s+/g, "");
+
+        if (!correctPrefix) {
+
+            return res.status(400).json({
+                success: false,
+                message: "Batch does not have a valid prefix."
+            });
+
+        }
+
+        // Get ONLY students belonging to this batch
+        const students = await Student.find({
+            batch: batch._id
+        });
+
+        let studentsToUpdate = [];
+
+        let conflicts = [];
+
+        for (const student of students) {
+
+            const oldRegisterNumber =
+                String(student.registerNumber || "")
+                    .trim()
+                    .toUpperCase();
+
+            // We only want the incorrect MD24 records
+            if (!oldRegisterNumber.startsWith("MD24")) {
+                continue;
+            }
+
+            const newRegisterNumber =
+                correctPrefix +
+                oldRegisterNumber.substring(4);
+
+            // Check whether another student already
+            // has the target register number
+            const existingStudent =
+                await Student.findOne({
+                    registerNumber: newRegisterNumber,
+                    _id: {
+                        $ne: student._id
+                    }
+                });
+
+            if (existingStudent) {
+
+                conflicts.push({
+                    oldRegisterNumber,
+                    newRegisterNumber,
+                    studentName: student.name
+                });
+
+                continue;
+            }
+
+            studentsToUpdate.push({
+                student,
+                oldRegisterNumber,
+                newRegisterNumber
+            });
+
+        }
+
+        // STOP if conflicts exist
+        if (conflicts.length > 0) {
+
+            return res.status(409).json({
+
+                success: false,
+
+                message:
+                    "Register number conflicts found. No students were changed.",
+
+                conflicts
+
+            });
+
+        }
+
+        // Perform updates
+        for (const item of studentsToUpdate) {
+
+            item.student.registerNumber =
+                item.newRegisterNumber;
+
+            await item.student.save();
+
+        }
+
+        res.status(200).json({
+
+            success: true,
+
+            message:
+                `Register prefixes fixed successfully for ${batch.batchName}.`,
+
+            batchName:
+                batch.batchName,
+
+            correctPrefix,
+
+            studentsFound:
+                students.length,
+
+            studentsUpdated:
+                studentsToUpdate.length
+
+        });
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Fix batch register prefixes error:",
+            error
+        );
+
+        res.status(500).json({
+
+            success: false,
+
+            message:
+                error.message ||
+                "Failed to fix register prefixes."
+
+        });
+
+    }
+
+};
 // =======================================
 // EXPORT CONTROLLERS
 // =======================================
@@ -286,6 +536,8 @@ module.exports = {
     addStudent,
     getStudents,
     updateStudent,
-    deleteStudent
+    deleteStudent,
+    assignStudentsToBatch,
+    fixBatchRegisterPrefixes
 
 };

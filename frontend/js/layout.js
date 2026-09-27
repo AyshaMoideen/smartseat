@@ -59,6 +59,8 @@ if(pageTitle){
 
     "dashboard.html": "Dashboard",
 
+    "batches.html": "Batch Management",
+
     "students.html": "Students",
 
     "create-exam.html": "Create Exam",
@@ -123,6 +125,8 @@ function initializeNavigation(){
             const routes = {
 
     dashboard: "dashboard.html",
+
+    batches: "batches.html",
 
     students: "students.html",
 

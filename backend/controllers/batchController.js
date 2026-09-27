@@ -14,6 +14,7 @@ const addBatch = async (req, res) => {
             prefix,
             startYear,
             endYear,
+            currentSemester,
             isActive
         } = req.body;
 
@@ -24,7 +25,8 @@ const addBatch = async (req, res) => {
             !batchName ||
             !prefix ||
             !startYear ||
-            !endYear
+            !endYear ||
+            !currentSemester
         ) {
 
             return res.status(400).json({
@@ -79,21 +81,13 @@ const addBatch = async (req, res) => {
         // Create batch
 
         const batch = await Batch.create({
-
-            batchName,
-
-            prefix: prefix.toUpperCase(),
-
-            startYear,
-
-            endYear,
-
-            isActive:
-                isActive !== undefined
-                    ? isActive
-                    : true
-
-        });
+    batchName,
+    prefix: prefix.toUpperCase(),
+    startYear,
+    endYear,
+    currentSemester,
+    isActive: isActive !== undefined ? isActive : true
+});
 
 
         res.status(201).json({
@@ -293,6 +287,105 @@ const deleteBatch = async (req, res) => {
 
 };
 
+/* ======================================
+   MOVE BATCH TO NEXT SEMESTER
+====================================== */
+
+const moveBatchToNextSemester = async (req, res) => {
+
+    try {
+
+        const batch = await Batch.findById(req.params.id);
+
+        if (!batch) {
+
+            return res.status(404).json({
+                message: "Batch not found"
+            });
+
+        }
+
+
+        /* ----------------------------------
+           CHECK FINAL SEMESTER
+        ---------------------------------- */
+
+        if (batch.currentSemester >= 6) {
+
+            return res.status(400).json({
+                message:
+                    "This batch has already completed Semester 6."
+            });
+
+        }
+
+
+        const oldSemester =
+            batch.currentSemester;
+
+        const newSemester =
+            oldSemester + 1;
+
+
+        /* ----------------------------------
+           UPDATE BATCH
+        ---------------------------------- */
+
+        batch.currentSemester =
+            newSemester;
+
+        await batch.save();
+
+
+        /* ----------------------------------
+           UPDATE STUDENTS
+        ---------------------------------- */
+
+        const Student =
+            require("../models/Student");
+
+        const studentResult =
+            await Student.updateMany(
+                {
+                    batch: batch._id,
+                    semester: oldSemester
+                },
+                {
+                    $set: {
+                        semester: newSemester
+                    }
+                }
+            );
+
+
+        return res.status(200).json({
+
+            message:
+                `Batch moved from Semester ${oldSemester} to Semester ${newSemester}.`,
+
+            batch,
+
+            studentsUpdated:
+                studentResult.modifiedCount
+
+        });
+
+    } catch (error) {
+
+        console.error(
+            "Move batch semester error:",
+            error
+        );
+
+        return res.status(500).json({
+            message:
+                "Failed to move batch to next semester.",
+            error: error.message
+        });
+
+    }
+
+};
 
 /* ==========================================
    EXPORT
@@ -306,6 +399,9 @@ module.exports = {
 
     updateBatch,
 
-    deleteBatch
+    deleteBatch,
+
+    moveBatchToNextSemester
 
 };
+

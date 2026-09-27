@@ -37,6 +37,12 @@ const searchStudent =
 const departmentFilter =
 document.getElementById("departmentFilter");
 
+const batchFilter =
+    document.getElementById("batchFilter");
+
+const semesterFilter =
+    document.getElementById("semesterFilter");
+
 const excelFile =
     document.getElementById("excelFile");
 
@@ -58,6 +64,11 @@ const studentBatch =
 const studentDepartment =
     document.getElementById("department");
 
+const assignBatchSelect =
+    document.getElementById("assignBatchSelect");
+
+const assignBatchBtn =
+    document.getElementById("assignBatchBtn");
 
 /* =========================================================
    HELPER
@@ -100,11 +111,18 @@ async function loadStudentBatches() {
         const data = await response.json();
 
         if (!response.ok || !data.success) {
+
             throw new Error(
                 data.message ||
                 "Unable to load batches."
             );
+
         }
+
+
+        /* ==========================================
+           CLEAR EXISTING OPTIONS
+        ========================================== */
 
         studentBatch.innerHTML = `
             <option value="">
@@ -112,22 +130,110 @@ async function loadStudentBatches() {
             </option>
         `;
 
+
+        if (batchFilter) {
+
+            batchFilter.innerHTML = `
+                <option value="">
+                    All Batches
+                </option>
+            `;
+
+        }
+
+
+        if (assignBatchSelect) {
+
+            assignBatchSelect.innerHTML = `
+                <option value="">
+                    Select Batch
+                </option>
+            `;
+
+        }
+
+
+        /* ==========================================
+           ADD BATCH OPTIONS
+        ========================================== */
+
         data.batches.forEach(batch => {
 
-            const option =
+
+            /* ==========================================
+               ADD STUDENT MODAL
+            ========================================== */
+
+            const studentOption =
                 document.createElement("option");
 
-            option.value = batch._id;
+            studentOption.value =
+                batch._id;
 
-            option.textContent =
+            studentOption.textContent =
                 `${batch.batchName} (${batch.prefix})`;
 
-            option.dataset.prefix =
+            studentOption.dataset.prefix =
                 batch.prefix;
 
-            studentBatch.appendChild(option);
+            studentOption.value = batch._id;
+            studentOption.textContent =
+                 `${batch.batchName} (${batch.prefix})`;
+
+            studentOption.dataset.prefix =
+                batch.prefix;               
+
+
+            /* ==========================================
+               BATCH FILTER
+            ========================================== */
+
+            if (batchFilter) {
+
+    const filterOption =
+        document.createElement("option");
+
+    filterOption.value =
+        batch.batchName;
+
+    filterOption.textContent =
+        batch.batchName;
+
+    filterOption.dataset.batchId =
+        batch._id;
+
+    filterOption.dataset.prefix =
+        batch.prefix;
+
+    batchFilter.appendChild(
+        filterOption
+    );
+
+}
+
+            /* ==========================================
+               ASSIGN EXISTING STUDENTS
+            ========================================== */
+
+            if (assignBatchSelect) {
+
+                const assignOption =
+                    document.createElement("option");
+
+                assignOption.value =
+                    batch._id;
+
+                assignOption.textContent =
+                    batch.batchName;
+
+                assignBatchSelect.appendChild(
+                    assignOption
+                );
+
+            }
 
         });
+
 
         console.log(
             "✅ Student batches loaded:",
@@ -135,6 +241,7 @@ async function loadStudentBatches() {
         );
 
     }
+
     catch (error) {
 
         console.error(
@@ -142,7 +249,9 @@ async function loadStudentBatches() {
             error
         );
 
-        if (typeof AlertManager !== "undefined") {
+        if (
+            typeof AlertManager !== "undefined"
+        ) {
 
             AlertManager.error(
                 "Batch Loading Error",
@@ -156,6 +265,126 @@ async function loadStudentBatches() {
 
 }
 
+/* =========================================================
+   UPDATE SEMESTER FILTER BASED ON BATCH
+   ========================================================= */
+
+function updateSemesterFilter() {
+
+    if (!semesterFilter) {
+        return;
+    }
+
+    const selectedBatch =
+        batchFilter?.value || "";
+
+    semesterFilter.innerHTML = `
+        <option value="">
+            All Semesters
+        </option>
+    `;
+
+    let semesters = [];
+
+    switch (selectedBatch) {
+
+    /* ==========================
+       2024-2027
+       Current: Semester 5
+       Next: Semester 6
+    ========================== */
+
+    case "2024-27":
+    case "2024-2027":
+    case "2024–2027":
+
+        semesters = [5, 6];
+
+        break;
+
+
+    /* ==========================
+       2025-2028
+       Current: Semester 3
+       Next: Semester 4
+    ========================== */
+
+    case "2025-28":
+    case "2025-2028":
+    case "2025–2028":
+
+        semesters = [3, 4];
+
+        break;
+
+
+    /* ==========================
+       2026-2029
+       Current: Semester 1
+       Next: Semester 2
+    ========================== */
+
+    case "2026-29":
+    case "2026-2029":
+    case "2026–2029":
+
+        semesters = [1, 2];
+
+        break;
+
+
+    /* ==========================
+       ALL BATCHES
+    ========================== */
+
+    default:
+
+        semesters = [1, 2, 3, 4, 5, 6];
+
+}
+
+
+    semesters.forEach(semester => {
+
+        const option =
+            document.createElement("option");
+
+        option.value =
+            semester;
+
+        option.textContent =
+            `${semester}${getOrdinalSuffix(semester)} Semester`;
+
+        semesterFilter.appendChild(
+            option
+        );
+
+    });
+
+}
+
+
+/* =========================================================
+   ORDINAL SUFFIX
+   ========================================================= */
+
+function getOrdinalSuffix(number) {
+
+    if (number === 1) {
+        return "st";
+    }
+
+    if (number === 2) {
+        return "nd";
+    }
+
+    if (number === 3) {
+        return "rd";
+    }
+
+    return "th";
+
+}
 
 /* =========================================================
    LOAD STUDENTS FROM MONGODB
@@ -239,47 +468,48 @@ async function loadStudents() {
    STATISTICS
    ========================================================= */
 
-function updateStatistics() {
+function updateStatistics(data = students) {
 
     const totalStudents =
-        document.getElementById(
-            "totalStudents"
-        );
+        document.getElementById("totalStudents");
 
     const totalDepartments =
-        document.getElementById(
-            "totalDepartments"
-        );
+        document.getElementById("totalDepartments");
 
     const totalSemesters =
-        document.getElementById(
-            "totalSemesters"
-        );
+        document.getElementById("totalSemesters");
 
     const activeStudents =
-        document.getElementById(
-            "activeStudents"
-        );
+        document.getElementById("activeStudents");
 
+
+    const currentStudents =
+        Array.isArray(data) ? data : [];
+
+
+    /* ==========================
+       TOTAL STUDENTS
+    ========================== */
 
     if (totalStudents) {
 
         totalStudents.textContent =
-            students.length;
+            currentStudents.length;
 
     }
 
 
-    const departments =
-        [
-            ...new Set(
-                students
-                    .map(student =>
-                        student.department
-                    )
-                    .filter(Boolean)
-            )
-        ];
+    /* ==========================
+       DEPARTMENTS
+    ========================== */
+
+    const departments = [
+        ...new Set(
+            currentStudents
+                .map(student => student.department)
+                .filter(Boolean)
+        )
+    ];
 
 
     if (totalDepartments) {
@@ -290,20 +520,21 @@ function updateStatistics() {
     }
 
 
-    const semesters =
-        [
-            ...new Set(
-                students
-                    .map(student =>
-                        student.semester
-                    )
-                    .filter(value =>
-                        value !== undefined &&
-                        value !== null &&
-                        value !== ""
-                    )
-            )
-        ];
+    /* ==========================
+       SEMESTERS
+    ========================== */
+
+    const semesters = [
+        ...new Set(
+            currentStudents
+                .map(student => student.semester)
+                .filter(value =>
+                    value !== undefined &&
+                    value !== null &&
+                    value !== ""
+                )
+        )
+    ];
 
 
     if (totalSemesters) {
@@ -314,15 +545,18 @@ function updateStatistics() {
     }
 
 
+    /* ==========================
+       ACTIVE STUDENTS
+    ========================== */
+
     if (activeStudents) {
 
         activeStudents.textContent =
-            students.length;
+            currentStudents.length;
 
     }
 
 }
-
 
 /* =========================================================
    SAFE VALUE
@@ -357,98 +591,51 @@ function renderStudents(data = students) {
     studentTable.innerHTML = "";
 
 
-    // ==========================================
-    // No Students
-    // ==========================================
-
     if (!data || data.length === 0) {
 
         studentTable.innerHTML = `
-
             <tr>
-
                 <td
                     colspan="6"
                     class="text-center">
-
                     No Students Found
-
                 </td>
-
             </tr>
-
         `;
 
-        updateStatistics();
+        updateStatistics(data);
 
         return;
     }
 
 
-    // ==========================================
-    // Student Rows
-    // ==========================================
-
     data.forEach((student, index) => {
-
-        // Find original student index
-        // This keeps Edit/Delete working
-        // even after filtering.
 
         const originalIndex =
             students.indexOf(student);
 
-
         studentTable.innerHTML += `
-
             <tr>
 
-                <!-- S.NO -->
-
                 <td class="student-sno">
-
                     ${index + 1}
-
                 </td>
 
-
-                <!-- REGISTER NUMBER -->
-
                 <td>
-
                     ${student.registerNumber || "-"}
-
                 </td>
 
-
-                <!-- NAME -->
-
                 <td>
-
                     ${student.name || "-"}
-
                 </td>
 
-
-                <!-- DEPARTMENT -->
-
                 <td>
-
                     ${student.department || "-"}
-
                 </td>
-
-
-                <!-- SEMESTER -->
 
                 <td>
-
                     ${student.semester || "-"}
-
                 </td>
-
-
-                <!-- ACTION -->
 
                 <td class="student-actions">
 
@@ -460,7 +647,6 @@ function renderStudents(data = students) {
                         <i class="bi bi-pencil-fill"></i>
 
                     </button>
-
 
                     <button
                         class="btn btn-danger btn-sm"
@@ -474,13 +660,12 @@ function renderStudents(data = students) {
                 </td>
 
             </tr>
-
         `;
 
     });
 
 
-    updateStatistics();
+    updateStatistics(data);
 
 }
 
@@ -800,27 +985,22 @@ if (saveStudentBtn) {
                                 headers:
                                     authHeaders(true),
 
-                                body:
-                                    JSON.stringify({
+                                body: JSON.stringify({
 
-                                        registerNumber:
-                                            regNo,
+    registerNumber: regNo,
 
-                                        name:
-                                            name,
+    name: name,
 
-                                        department:
-                                            department,
+    department: department,
 
-                                        semester:
-                                            Number(
-                                                semester
-                                            ),
+    semester: Number(semester),
 
-                                        section:
-                                            "A"
+    section: "A",
 
-                                    })
+    batch:
+        studentBatch?.value || null
+
+})
                             }
                         );
 
@@ -913,28 +1093,23 @@ if (saveStudentBtn) {
                             headers:
                                 authHeaders(true),
 
-                            body:
-                                JSON.stringify({
+                            body: JSON.stringify({
 
-                                    registerNumber:
-                                        regNo,
+    registerNumber: regNo,
 
-                                    name:
-                                        name,
+    name: name,
 
-                                    department:
-                                        department,
+    department: department,
 
-                                    semester:
-                                        Number(
-                                            semester
-                                        ),
+    semester: Number(semester),
 
-                                    section:
-                                        student.section ||
-                                        "A"
+    section:
+        student.section || "A",
 
-                                })
+    batch:
+        studentBatch?.value || null
+
+})
                         }
                     );
 
@@ -1041,6 +1216,9 @@ window.editStudent = function(index) {
             "semester"
         );
 
+    const batch =
+    document.getElementById("studentBatch");
+
 
     if (regNo) {
 
@@ -1070,6 +1248,15 @@ window.editStudent = function(index) {
 
         semester.value =
             student.semester || "";
+
+    }
+
+    if (batch) {
+
+    batch.value =
+        student.batch?._id ||
+        student.batch ||
+        "";
 
     }
 
@@ -1225,47 +1412,77 @@ window.deleteStudent = async function(index) {
 };
 
 /* ==========================================
-   SEARCH + DEPARTMENT FILTER
+   SEARCH + BATCH + SEMESTER + DEPARTMENT
 ========================================== */
 
-function applyStudentFilters(){
+function applyStudentFilters() {
 
     const searchValue =
-        searchStudent.value
-            .trim()
-            .toLowerCase();
+        searchStudent?.value
+            ?.trim()
+            .toLowerCase() || "";
+
 
     const departmentValue =
-        departmentFilter.value
-            .trim()
-            .toLowerCase();
+        departmentFilter?.value
+            ?.trim()
+            .toLowerCase() || "";
+
+
+    const batchValue =
+        batchFilter?.value
+            ?.trim()
+            .toLowerCase() || "";
+
+
+    const semesterValue =
+        semesterFilter?.value
+            ?.trim() || "";
 
 
     const filtered =
         students.filter(student => {
 
+
             const registerNumber =
                 String(
                     student.registerNumber || ""
                 )
+                .trim()
                 .toLowerCase();
+
 
             const name =
                 String(
                     student.name || ""
                 )
+                .trim()
                 .toLowerCase();
+
 
             const department =
                 String(
                     student.department || ""
                 )
+                .trim()
                 .toLowerCase();
+
 
             const semester =
                 String(
-                    student.semester || ""
-                );
+                    student.semester ?? ""
+                )
+                .trim();
+
+
+            const batch =
+                String(
+                    student.batch?.batchName ||
+                    student.batchName ||
+                    ""
+                )
+                .trim()
+                .toLowerCase();
 
 
             /* ==========================
@@ -1305,9 +1522,38 @@ function applyStudentFilters(){
                     departmentValue;
 
 
+            /* ==========================
+               BATCH MATCH
+            ========================== */
+
+            const matchesBatch =
+
+                batchValue === "" ||
+
+                batch === batchValue;
+
+
+            /* ==========================
+               SEMESTER MATCH
+            ========================== */
+
+            const matchesSemester =
+
+                semesterValue === "" ||
+
+                semester === semesterValue;
+
+
             return (
+
                 matchesSearch &&
-                matchesDepartment
+
+                matchesDepartment &&
+
+                matchesBatch &&
+
+                matchesSemester
+
             );
 
         });
@@ -1316,8 +1562,6 @@ function applyStudentFilters(){
     renderStudents(filtered);
 
 }
-
-
 /* ==========================================
    SEARCH EVENT
 ========================================== */
@@ -1331,7 +1575,6 @@ if(searchStudent){
 
 }
 
-
 /* ==========================================
    DEPARTMENT FILTER EVENT
 ========================================== */
@@ -1344,7 +1587,38 @@ if(departmentFilter){
     );
 
 }
+/* ==========================================
+   BATCH FILTER EVENT
+========================================== */
 
+if (batchFilter) {
+
+    batchFilter.addEventListener(
+        "change",
+        () => {
+
+            updateSemesterFilter();
+
+            applyStudentFilters();
+
+        }
+    );
+
+}
+
+
+/* ==========================================
+   SEMESTER FILTER EVENT
+========================================== */
+
+if (semesterFilter) {
+
+    semesterFilter.addEventListener(
+        "change",
+        applyStudentFilters
+    );
+
+}
 /* =========================================================
    SMART EXCEL IMPORT
    WITH LIVE PROGRESS
@@ -1394,6 +1668,14 @@ if (uploadExcelBtn && excelFile) {
                 let imported = 0;
                 let skipped = 0;
                 let failed = 0;
+
+                let skipReasons = {
+                    missingRegister: 0,
+                    missingName: 0,
+                    invalidSemester: 0,
+                    alreadyExists: 0,
+                    duplicateInExcel: 0
+                };
 
                 let importedStudents = [];
 
@@ -1775,42 +2057,112 @@ if (uploadExcelBtn && excelFile) {
                                 header === "sem"
                         );
 
-                    /* =================================================
-                       FIND PREFIX
-                       ================================================= */
+                        /* =================================================
+   GET BATCH FOR EXCEL IMPORT
+   ================================================= */
 
-                    let prefix = "";
+/*
+   IMPORTANT:
+   Excel import uses the MAIN STUDENT BATCH dropdown.
 
-                    for (
-                        let i = 0;
-                        i < headerRowIndex;
-                        i++
-                    ) {
+   studentBatch = batch selected for the students
+   batchFilter  = table filtering only
 
-                        for (
-                            const cell of rows[i]
-                        ) {
+   DO NOT use batchFilter here.
+*/
 
-                            const value =
-                                String(cell)
-                                    .trim()
-                                    .toUpperCase();
+const selectedBatchOption =
+    studentBatch?.options[
+        studentBatch.selectedIndex
+    ];
 
-                            if (
-                                /^MD\d{2}$/.test(
-                                    value
-                                )
-                            ) {
+const selectedBatchId =
+    selectedBatchOption?.value || "";
 
-                                prefix = value;
-                            }
-                        }
-                    }
+const prefix =
+    selectedBatchOption
+        ?.dataset
+        ?.prefix
+        ?.trim()
+        .toUpperCase()
+        .replace(/\s+/g, "") || "";
 
-                    if (!prefix) {
-                        prefix = "MD24";
-                    }
 
+/* =================================================
+   VALIDATE BATCH
+   ================================================= */
+
+if (!selectedBatchId) {
+
+    console.error(
+        "❌ No batch selected for Excel import."
+    );
+
+    throw new Error(
+        "Please select the correct batch in the Student Batch dropdown before importing."
+    );
+}
+
+
+if (!prefix) {
+
+    console.error(
+        "❌ Batch prefix not found."
+    );
+
+    throw new Error(
+        "The selected batch does not have a valid register prefix."
+    );
+}
+
+
+console.log(
+    "================================"
+);
+
+console.log(
+    "📚 Import Batch:",
+    selectedBatchOption?.textContent
+);
+
+console.log(
+    "🆔 Batch ID:",
+    selectedBatchId
+);
+
+console.log(
+    "🔢 Prefix:",
+    prefix
+);
+
+console.log(
+    "================================"
+);
+
+console.log(
+    "================================"
+);
+
+console.log(
+    "📚 Import Batch:",
+    selectedBatchOption?.textContent
+);
+
+console.log(
+    "🆔 Batch ID:",
+    selectedBatchId
+);
+
+console.log(
+    "🔢 Prefix:",
+    prefix
+);
+
+console.log(
+    "================================"
+);
+
+                    
                     /* =================================================
                        PROCESS STUDENT ROWS
                        ================================================= */
@@ -1878,45 +2230,78 @@ if (uploadExcelBtn && excelFile) {
                            VALIDATE REGISTER + NAME
                            ================================================= */
 
-                        if (
-                            !rawRegister ||
-                            !name
-                        ) {
+                        if (!rawRegister || !name) {
 
-                            console.warn(
-                                "⚠️ Skipping invalid row:",
-                                row
-                            );
+    if (!rawRegister) {
+        skipReasons.missingRegister++;
+    }
 
-                            skipped++;
+    if (!name) {
+        skipReasons.missingName++;
+    }
 
-                            await updateImportProgress();
+    console.warn(
+        "⚠️ Skipping invalid row:",
+        row
+    );
 
-                            continue;
-                        }
+    skipped++;
 
+    await updateImportProgress();
+
+    continue;
+}
                         /* =================================================
-                           BUILD REGISTER NUMBER
-                           ================================================= */
+   BUILD REGISTER NUMBER
+   ================================================= */
 
-                        let registerNumber =
-                            rawRegister
-                                .toUpperCase()
-                                .replace(
-                                    /\s+/g,
-                                    ""
-                                );
+let registerNumber =
+    rawRegister
+        .toUpperCase()
+        .replace(
+            /\s+/g,
+            ""
+        );
 
-                        if (
-                            !registerNumber.startsWith(
-                                prefix
-                            )
-                        ) {
 
-                            registerNumber =
-                                prefix +
-                                registerNumber;
-                        }
+/*
+   Remove any existing MDxx prefix from Excel.
+
+   Example:
+
+   Excel:
+   MD24CCAR001
+
+   Selected batch:
+   MD25
+
+   Result:
+   MD25CCAR001
+
+   This prevents the old MD24 prefix from
+   contaminating the 2025-2028 batch.
+*/
+
+registerNumber =
+    registerNumber.replace(
+        /^MD\d{2}/,
+        ""
+    );
+
+
+/*
+   Add the prefix belonging to the
+   selected batch.
+*/
+
+registerNumber =
+    prefix +
+    registerNumber;
+
+
+console.log(
+    `🔢 Register: ${rawRegister} → ${registerNumber}`
+);
 
                         /* =================================================
                            DEPARTMENT FALLBACK
@@ -1941,24 +2326,24 @@ if (uploadExcelBtn && excelFile) {
                             Number(semester);
 
                         if (
-                            !semester ||
-                            Number.isNaN(
-                                semesterNumber
-                            )
-                        ) {
+    !semester ||
+    Number.isNaN(semesterNumber)
+) {
 
-                            console.warn(
-                                "⚠️ Invalid semester:",
-                                registerNumber,
-                                semester
-                            );
+    console.warn(
+        "⚠️ Invalid semester:",
+        registerNumber,
+        semester
+    );
 
-                            skipped++;
+    skipReasons.invalidSemester++;
 
-                            await updateImportProgress();
+    skipped++;
 
-                            continue;
-                        }
+    await updateImportProgress();
+
+    continue;
+}
 
                         /* =================================================
                            CHECK EXISTING STUDENTS
@@ -1977,21 +2362,20 @@ if (uploadExcelBtn && excelFile) {
                                     registerNumber
                             );
 
-                        if (
-                            alreadyExists
-                        ) {
+                        if (alreadyExists) {
 
-                            console.log(
-                                `⏭️ Already exists: ${registerNumber}`
-                            );
+    console.log(
+        `⏭️ Already exists: ${registerNumber}`
+    );
 
-                            skipped++;
+    skipReasons.alreadyExists++;
 
-                            await updateImportProgress();
+    skipped++;
 
-                            continue;
-                        }
+    await updateImportProgress();
 
+    continue;
+}
                         /* =================================================
                            CHECK DUPLICATE IN CURRENT EXCEL
                            ================================================= */
@@ -2004,41 +2388,32 @@ if (uploadExcelBtn && excelFile) {
                                     registerNumber
                             );
 
-                        if (
-                            alreadyImported
-                        ) {
+                        if (alreadyImported) {
 
-                            console.log(
-                                `⏭️ Duplicate in Excel: ${registerNumber}`
-                            );
+    console.log(
+        `⏭️ Duplicate in Excel: ${registerNumber}`
+    );
 
-                            skipped++;
+    skipReasons.duplicateInExcel++;
 
-                            await updateImportProgress();
+    skipped++;
 
-                            continue;
-                        }
+    await updateImportProgress();
+
+    continue;
+}
 
                         /* =================================================
                            CREATE STUDENT
                            ================================================= */
 
                         const studentData = {
-
-                            registerNumber:
-                                registerNumber,
-
-                            name:
-                                name,
-
-                            department:
-                                department,
-
-                            semester:
-                                semesterNumber,
-
-                            section:
-                                "A"
+                            registerNumber: registerNumber,
+                            name: name,
+                            department: department,
+                            semester: semesterNumber,
+                            section: "A",
+                            batch: selectedBatchId
                         };
 
                         console.log(
@@ -2094,8 +2469,8 @@ if (uploadExcelBtn && excelFile) {
                             }
 
                             else if (
-                                response.status === 409
-                            ) {
+    response.status === 400
+) {
 
                                 skipped++;
 
@@ -2184,6 +2559,11 @@ if (uploadExcelBtn && excelFile) {
                 console.log(
                     "================================"
                 );
+
+                console.log(
+    "📋 SKIP REASONS:",
+    skipReasons
+);
 
                 await Swal.fire({
 
@@ -2603,6 +2983,236 @@ if (studentDepartment) {
 
 }
 
+/* =========================================================
+   ASSIGN EXISTING STUDENTS TO BATCH
+========================================================= */
+
+if (assignBatchBtn) {
+
+    assignBatchBtn.addEventListener(
+        "click",
+        async () => {
+
+            const batchId =
+                assignBatchSelect?.value || "";
+
+            if (!batchId) {
+
+                AlertManager.warning(
+                    "Select Batch",
+                    "Please select a batch first."
+                );
+
+                return;
+            }
+
+
+            const selectedBatch =
+                assignBatchSelect.options[
+                    assignBatchSelect.selectedIndex
+                ];
+
+
+            const batchName =
+                selectedBatch?.textContent ||
+                "selected batch";
+
+
+            /*
+             * Count students that currently
+             * don't have a batch.
+             */
+
+            const unassignedStudents =
+                students.filter(
+                    student =>
+                        !student.batch
+                );
+
+
+            if (unassignedStudents.length === 0) {
+
+                AlertManager.info(
+                    "No Unassigned Students",
+                    "All students already have a batch assigned."
+                );
+
+                return;
+            }
+
+
+            /* ==========================================
+               CONFIRMATION
+            ========================================== */
+
+            const result =
+                await Swal.fire({
+
+                    title:
+                        "Assign Students to Batch?",
+
+                    html: `
+                        <strong>${unassignedStudents.length}</strong>
+                        students currently have no batch.<br><br>
+
+                        They will be assigned to:
+                        <strong>${batchName}</strong>
+                    `,
+
+                    icon:
+                        "warning",
+
+                    showCancelButton:
+                        true,
+
+                    confirmButtonText:
+                        "Yes, Assign Batch",
+
+                    cancelButtonText:
+                        "Cancel"
+
+                });
+
+
+            if (!result.isConfirmed) {
+
+                return;
+
+            }
+
+
+            /* ==========================================
+               LOADING
+            ========================================== */
+
+            Swal.fire({
+
+                title:
+                    "Assigning Batch...",
+
+                html:
+                    "Please wait while students are being updated.",
+
+                allowOutsideClick:
+                    false,
+
+                allowEscapeKey:
+                    false,
+
+                didOpen: () => {
+
+                    Swal.showLoading();
+
+                }
+
+            });
+
+
+            try {
+
+                const response =
+                    await fetch(
+                        `${API_URL}/assign-batch`,
+                        {
+                            method: "PUT",
+
+                            headers:
+                                authHeaders(true),
+
+                            body:
+                                JSON.stringify({
+                                    batchId
+                                })
+                        }
+                    );
+
+
+                const data =
+                    await response.json();
+
+
+                if (
+                    !response.ok ||
+                    !data.success
+                ) {
+
+                    throw new Error(
+                        data.message ||
+                        "Unable to assign batch."
+                    );
+
+                }
+
+
+                /* ==========================================
+                   ACTIVITY
+                ========================================== */
+
+                ActivityManager.addActivity(
+                    `Assigned ${data.studentsUpdated} Students to ${batchName}`
+                );
+
+
+                /* ==========================================
+                   RELOAD STUDENTS
+                ========================================== */
+
+                await loadStudents();
+
+
+                /* ==========================================
+                   SUCCESS
+                ========================================== */
+
+                await Swal.fire({
+
+                    title:
+                        "Batch Assigned Successfully",
+
+                    html: `
+                        <strong>${data.studentsUpdated}</strong>
+                        students assigned to
+                        <strong>${batchName}</strong>.
+                    `,
+
+                    icon:
+                        "success",
+
+                    confirmButtonText:
+                        "OK"
+
+                });
+
+
+                /*
+                 * Reset dropdown after successful
+                 * assignment.
+                 */
+
+                assignBatchSelect.value = "";
+
+            }
+
+            catch (error) {
+
+                console.error(
+                    "Assign batch error:",
+                    error
+                );
+
+
+                AlertManager.error(
+                    "Batch Assignment Failed",
+                    error.message ||
+                    "Unable to assign students to batch."
+                );
+
+            }
+
+        }
+    );
+
+}
 
 /* =========================================================
    INITIAL LOAD

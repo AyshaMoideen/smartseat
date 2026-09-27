@@ -5,8 +5,11 @@ const router = express.Router();
 const {
     addStudent,
     getStudents,
+    updateStudent,
     deleteStudent,
-    updateStudent
+    assignStudentsToBatch,
+    fixBatchRegisterPrefixes
+
 } = require("../controllers/studentController");
 
 const protect =
@@ -25,6 +28,18 @@ router.post("/", addStudent);
 router.get("/", getStudents);
 
 // Update Student
+
+router.put(
+    "/assign-batch",
+    assignStudentsToBatch
+);
+
+// Fix register prefixes for a specific batch
+
+router.put(
+    "/fix-prefix/:batchId",
+    fixBatchRegisterPrefixes
+);
 
 router.put("/:id", updateStudent);
 

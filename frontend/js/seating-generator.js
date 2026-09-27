@@ -715,6 +715,452 @@ function getAdditionalStudents(
 
 }
 
+/* ==========================================
+   GET ID VALUE
+========================================== */
+
+function getIdValue(value) {
+
+    if (!value) {
+        return "";
+    }
+
+
+    if (
+        typeof value === "object" &&
+        value._id
+    ) {
+
+        return String(
+            value._id
+        );
+
+    }
+
+
+    return String(
+        value
+    );
+
+}
+
+
+/* ==========================================
+   GET STUDENT BATCH ID
+========================================== */
+
+function getStudentBatchId(student) {
+
+    if (!student) {
+        return "";
+    }
+
+
+    if (student.batch) {
+
+        if (
+            typeof student.batch ===
+            "object" &&
+            student.batch._id
+        ) {
+
+            return String(
+                student.batch._id
+            );
+
+        }
+
+
+        return String(
+            student.batch
+        );
+
+    }
+
+
+    if (student.batchId) {
+
+        return String(
+            student.batchId
+        );
+
+    }
+
+
+    return "";
+
+}
+
+
+/* ==========================================
+   GET PAPER KEY
+========================================== */
+
+function getPaperKey(paper) {
+
+    if (!paper) {
+        return "";
+    }
+
+
+    const code =
+        String(
+            paper.subjectCode || ""
+        )
+            .trim()
+            .toUpperCase();
+
+
+    const name =
+        String(
+            paper.subjectName || ""
+        )
+            .trim()
+            .toLowerCase()
+            .replace(
+                /\s+/g,
+                " "
+            );
+
+
+    /*
+       Prefer subject code.
+
+       If no code exists, use subject name.
+    */
+
+    return (
+        code ||
+        name
+    );
+
+}
+
+/* ==========================================
+   CREATE MIXED STUDENT ORDER
+========================================== */
+
+function createMixedStudentOrder(
+    studentList
+) {
+
+    if (
+        !Array.isArray(studentList) ||
+        studentList.length === 0
+    ) {
+
+        return [];
+
+    }
+
+
+    /*
+       Group students by department.
+    */
+
+    const departmentGroups = {};
+
+    studentList.forEach(
+        student => {
+
+            const department =
+                normalizeDepartment(
+                    student?.department
+                ) || "UNKNOWN";
+
+
+            if (
+                !departmentGroups[
+                    department
+                ]
+            ) {
+
+                departmentGroups[
+                    department
+                ] = [];
+
+            }
+
+
+            departmentGroups[
+                department
+            ].push(student);
+
+        }
+    );
+
+
+    /*
+       Shuffle every department group.
+    */
+
+    Object.values(
+        departmentGroups
+    ).forEach(
+        group => {
+
+            for (
+                let i =
+                    group.length - 1;
+                i > 0;
+                i--
+            ) {
+
+                const j =
+                    Math.floor(
+                        Math.random() *
+                        (i + 1)
+                    );
+
+
+                [
+                    group[i],
+                    group[j]
+                ] = [
+                    group[j],
+                    group[i]
+                ];
+
+            }
+
+        }
+    );
+
+
+    /*
+       Arrange departments in a
+       rotating order.
+
+       This prevents the students
+       from one department appearing
+       together in the initial order.
+    */
+
+    const departments =
+        Object.keys(
+            departmentGroups
+        );
+
+
+    /*
+       Shuffle department order.
+    */
+
+    for (
+        let i =
+            departments.length - 1;
+        i > 0;
+        i--
+    ) {
+
+        const j =
+            Math.floor(
+                Math.random() *
+                (i + 1)
+            );
+
+
+        [
+            departments[i],
+            departments[j]
+        ] = [
+            departments[j],
+            departments[i]
+        ];
+
+    }
+
+
+    /*
+       Build the final mixed list.
+    */
+
+    const result = [];
+
+    let remaining = true;
+
+    while (remaining) {
+
+        remaining = false;
+
+
+        for (
+            const department
+            of departments
+        ) {
+
+            const group =
+                departmentGroups[
+                    department
+                ];
+
+
+            if (
+                group &&
+                group.length > 0
+            ) {
+
+                result.push(
+                    group.shift()
+                );
+
+                remaining = true;
+
+            }
+
+        }
+
+    }
+
+
+    return result;
+
+}
+/* ==========================================
+   FIND STUDENT EXAM PAPER
+========================================== */
+
+function findStudentExamPaper(
+    student,
+    exam
+) {
+
+    if (
+        !student ||
+        !exam ||
+        !Array.isArray(
+            exam.subjects
+        )
+    ) {
+
+        return null;
+
+    }
+
+
+    const studentBatchId =
+        getStudentBatchId(
+            student
+        );
+
+
+    const studentSemester =
+        Number(
+            student.semester
+        );
+
+
+    const studentDepartment =
+        normalizeDepartment(
+            student.department
+        );
+
+
+    if (
+        !studentBatchId ||
+        !studentSemester ||
+        !studentDepartment
+    ) {
+
+        return null;
+
+    }
+
+
+    const paper =
+        exam.subjects.find(
+            subject => {
+
+                const subjectBatchId =
+                    getIdValue(
+                        subject.batch
+                    );
+
+
+                const subjectSemester =
+                    Number(
+                        subject.semester
+                    );
+
+
+                const subjectDepartment =
+                    normalizeDepartment(
+                        subject.department
+                    );
+
+
+                /*
+                   Normal department match
+                */
+
+                if (
+                    subjectDepartment ===
+                    studentDepartment
+                ) {
+
+                    return (
+
+                        subjectBatchId ===
+                        studentBatchId
+
+                        &&
+
+                        subjectSemester ===
+                        studentSemester
+
+                    );
+
+                }
+
+
+                /*
+                   Backward compatibility
+                   for BCOM.CA/CP.
+                */
+
+                if (
+                    subjectDepartment ===
+                    "BCOM.CA/CP"
+                ) {
+
+                    return (
+
+                        (
+                            studentDepartment ===
+                                "BCOM.CA"
+
+                            ||
+
+                            studentDepartment ===
+                                "BCOM.CP"
+                        )
+
+                        &&
+
+                        subjectBatchId ===
+                        studentBatchId
+
+                        &&
+
+                        subjectSemester ===
+                        studentSemester
+
+                    );
+
+                }
+
+
+                return false;
+
+            }
+        );
+
+
+    return paper || null;
+
+}
+
+
 
 /* ==========================================
    UPDATE SELECTED EXAM
@@ -732,17 +1178,13 @@ function updateSelectedExam() {
     selectedExam =
         exams.find(
             exam =>
-                String(
-                    exam._id
-                ) ===
-                String(
-                    selectedExamId
-                )
+                String(exam._id) ===
+                String(selectedExamId)
         );
 
 
     /* --------------------------------------
-       NO EXAM
+       NO EXAM SELECTED
     -------------------------------------- */
 
     if (!selectedExam) {
@@ -750,6 +1192,10 @@ function updateSelectedExam() {
         students = [];
 
         seating = [];
+
+        localStorage.removeItem(
+            "smartseatGeneratedReport"
+        );
 
         updateStatistics();
 
@@ -763,76 +1209,302 @@ function updateSelectedExam() {
 
 
     /* --------------------------------------
-       SEMESTER
+       PARTICIPATING BATCH + SEMESTERS
     -------------------------------------- */
 
-    const examSemester =
-        Number(
-            selectedExam.semester
+    const participating =
+        Array.isArray(
+            selectedExam.participatingSemesters
+        )
+            ? selectedExam.participatingSemesters
+            : [];
+
+
+    if (!participating.length) {
+
+        students = [];
+
+        seating = [];
+
+        updateStatistics();
+
+        renderSeatingTable();
+
+        showAlert(
+            "No Participating Semesters",
+            "This examination does not have any participating batch and semester configured.",
+            "warning"
         );
+
+        return;
+
+    }
 
 
     /* --------------------------------------
-       EXAM DEPARTMENTS
+       EXAM SUBJECTS
     -------------------------------------- */
 
-    const examDepartments =
-        getExamDepartments(
-            selectedExam
+    const examSubjects =
+        Array.isArray(
+            selectedExam.subjects
+        )
+            ? selectedExam.subjects
+            : [];
+
+
+    if (!examSubjects.length) {
+
+        students = [];
+
+        seating = [];
+
+        updateStatistics();
+
+        renderSeatingTable();
+
+        showAlert(
+            "No Examination Subjects",
+            "This examination does not have any subjects configured.",
+            "warning"
         );
+
+        return;
+
+    }
 
 
     /* --------------------------------------
-       ALLOWED DEPARTMENTS
-    -------------------------------------- */
-
-    const allowedDepartments =
-        getAllowedStudentDepartments(
-            examDepartments
-        );
-
-
-    /* --------------------------------------
-       MASTER STUDENTS
+       FIND ELIGIBLE STUDENTS
     -------------------------------------- */
 
     const examStudents =
-        masterStudents.filter(
-            student => {
-
-                const semester =
-                    Number(
-                        student.semester
-                    );
+        [];
 
 
-                const department =
-                    normalizeDepartment(
-                        student.department
-                    );
+    masterStudents.forEach(
+        student => {
 
-
-                return (
-                    semester ===
-                    examSemester
-                    &&
-                    allowedDepartments.has(
-                        department
-                    )
+            const studentBatchId =
+                getStudentBatchId(
+                    student
                 );
 
+
+            const studentSemester =
+                Number(
+                    student.semester
+                );
+
+
+            const studentDepartment =
+                normalizeDepartment(
+                    student.department
+                );
+
+
+            if (
+                !studentBatchId ||
+                !studentSemester ||
+                !studentDepartment
+            ) {
+
+                return;
+
             }
-        );
+
+
+            /* --------------------------------
+               Check Batch + Semester
+            -------------------------------- */
+
+            const participant =
+                participating.find(
+                    item => {
+
+                        const participantBatchId =
+                            getIdValue(
+                                item.batch
+                            );
+
+
+                        return (
+
+                            participantBatchId ===
+                            studentBatchId
+
+                            &&
+
+                            Number(
+                                item.semester
+                            ) ===
+                            studentSemester
+
+                        );
+
+                    }
+                );
+
+
+            if (!participant) {
+
+                return;
+
+            }
+
+
+            /* --------------------------------
+               Find EXACT examination paper
+            -------------------------------- */
+
+            const paper =
+                findStudentExamPaper(
+                    student,
+                    selectedExam
+                );
+
+
+            if (!paper) {
+
+                /*
+                   Don't add the student yet.
+
+                   We handle missing papers
+                   below so the generator can
+                   stop safely.
+                */
+
+                examStudents.push({
+
+                    ...student,
+
+                    __paperMissing: true,
+
+                    __paper: null
+
+                });
+
+                return;
+
+            }
+
+
+            examStudents.push({
+
+                ...student,
+
+                __paperMissing: false,
+
+                __paper: paper
+
+            });
+
+        }
+    );
 
 
     /* --------------------------------------
-       ADDITIONAL STUDENTS
+       CHECK MISSING PAPER INFORMATION
+    -------------------------------------- */
+
+    const studentsWithoutPaper =
+        examStudents.filter(
+            student =>
+                student.__paperMissing
+        );
+
+
+    if (
+        studentsWithoutPaper.length > 0
+    ) {
+
+        console.error(
+            "Students without examination paper:",
+            studentsWithoutPaper
+        );
+
+        students = [];
+
+        seating = [];
+
+        updateStatistics();
+
+        renderSeatingTable();
+
+        showAlert(
+            "Paper Information Missing",
+            `${studentsWithoutPaper.length} student(s) could not be matched to an examination paper for their batch, semester and department. Seating cannot be generated safely.`,
+            "error"
+        );
+
+        return;
+
+    }
+
+
+    /* --------------------------------------
+       ADDITIONAL ENTRIES
     -------------------------------------- */
 
     const additionalStudents =
         getAdditionalStudents(
             selectedExam._id
         );
+
+
+    /*
+       Additional Entries must also have
+       enough information to enforce the
+       same-paper rule.
+
+       We don't silently put unknown-paper
+       students into the arrangement.
+    */
+
+    additionalStudents.forEach(
+        student => {
+
+            const paper =
+                findStudentExamPaper(
+                    student,
+                    selectedExam
+                );
+
+
+            student.__paper =
+                paper || null;
+
+
+            student.__paperMissing =
+                !paper;
+
+        }
+    );
+
+
+    const additionalWithoutPaper =
+        additionalStudents.filter(
+            student =>
+                student.__paperMissing
+        );
+
+
+    if (
+        additionalWithoutPaper.length > 0
+    ) {
+
+        console.warn(
+            "Additional entries without paper information:",
+            additionalWithoutPaper
+        );
+
+        /*
+           Don't add them to the seating pool.
+           They can be handled later through
+           Additional Entries with paper data.
+        */
+
+    }
 
 
     /* --------------------------------------
@@ -845,7 +1517,7 @@ function updateSelectedExam() {
         ];
 
 
-    const existing =
+    const existingRegisters =
         new Set();
 
 
@@ -860,7 +1532,7 @@ function updateSelectedExam() {
 
             if (registerNumber) {
 
-                existing.add(
+                existingRegisters.add(
                     registerNumber
                 );
 
@@ -870,34 +1542,39 @@ function updateSelectedExam() {
     );
 
 
-    additionalStudents.forEach(
-        student => {
+    additionalStudents
+        .filter(
+            student =>
+                !student.__paperMissing
+        )
+        .forEach(
+            student => {
 
-            const registerNumber =
-                getRegisterNumber(
-                    student
-                );
+                const registerNumber =
+                    getRegisterNumber(
+                        student
+                    );
 
 
-            if (
-                registerNumber &&
-                !existing.has(
-                    registerNumber
-                )
-            ) {
+                if (
+                    registerNumber &&
+                    !existingRegisters.has(
+                        registerNumber
+                    )
+                ) {
 
-                combinedStudents.push(
-                    student
-                );
+                    combinedStudents.push(
+                        student
+                    );
 
-                existing.add(
-                    registerNumber
-                );
+                    existingRegisters.add(
+                        registerNumber
+                    );
+
+                }
 
             }
-
-        }
-    );
+        );
 
 
     /* --------------------------------------
@@ -914,18 +1591,11 @@ function updateSelectedExam() {
 
     seating = [];
 
-localStorage.removeItem(
-    "smartseatGeneratedReport"
-);
 
-updateStatistics();
+    localStorage.removeItem(
+        "smartseatGeneratedReport"
+    );
 
-renderSeatingTable();
-
-
-    /* --------------------------------------
-       UPDATE UI
-    -------------------------------------- */
 
     updateStatistics();
 
@@ -935,7 +1605,7 @@ renderSeatingTable();
 
 
     /* --------------------------------------
-       DEBUG
+       DEBUG INFORMATION
     -------------------------------------- */
 
     console.log(
@@ -948,20 +1618,13 @@ renderSeatingTable();
     );
 
     console.log(
-        "Semester:",
-        examSemester
+        "Participating Batch/Semesters:",
+        participating
     );
 
     console.log(
-        "Exam Departments:",
-        examDepartments
-    );
-
-    console.log(
-        "Allowed Student Departments:",
-        [
-            ...allowedDepartments
-        ]
+        "Exam Subjects:",
+        examSubjects
     );
 
     console.log(
@@ -970,7 +1633,7 @@ renderSeatingTable();
     );
 
     console.log(
-        "Students for this Exam:",
+        "Eligible Students:",
         examStudents.length
     );
 
@@ -1294,88 +1957,740 @@ function groupStudentsByDepartment(
 
 }
 
-
 /* ==========================================
-   MIX DEPARTMENTS
+   GET STUDENT PAPER
 ========================================== */
 
-function createMixedStudentOrder(
-    studentList
-) {
-
-    const groups =
-        groupStudentsByDepartment(
-            studentList
-        );
-
-
-    const departments =
-        Object.keys(
-            groups
-        );
-
-
-    const result = [];
-
-
-    let remaining = true;
-
+function getStudentPaperKey(student) {
 
     /*
-       Round-robin department selection.
-
-       Example:
-
-       BCA
-       BCOM.CA
-       BBA.AVH
-       BBA.TTM
-       BA.ENG
-       BCA
-       BCOM.CA
-       ...
+       First use the paper already matched
+       during updateSelectedExam().
     */
 
-    while (
-        remaining
+    if (
+        student &&
+        student.__paper
     ) {
 
-        remaining = false;
+        const paperKey =
+            getPaperKey(
+                student.__paper
+            );
 
-
-        departments.forEach(
-            department => {
-
-                if (
-                    groups[
-                        department
-                    ] &&
-                    groups[
-                        department
-                    ].length > 0
-                ) {
-
-                    result.push(
-                        groups[
-                            department
-                        ].shift()
-                    );
-
-
-                    remaining = true;
-
-                }
-
-            }
-        );
+        if (paperKey) {
+            return paperKey;
+        }
 
     }
 
 
-    return result;
+    /*
+       Fallback:
+       determine the paper directly from
+       the student's department.
+    */
+
+    if (
+        !selectedExam ||
+        !Array.isArray(
+            selectedExam.subjects
+        )
+    ) {
+
+        return "UNKNOWN_PAPER";
+
+    }
+
+
+    const studentDepartment =
+        normalizeDepartment(
+            student?.department
+        );
+
+
+    if (!studentDepartment) {
+
+        return "UNKNOWN_PAPER";
+
+    }
+
+
+    const matchingSubject =
+        selectedExam.subjects.find(
+            subject => {
+
+                const departments =
+                    Array.isArray(
+                        subject?.departments
+                    )
+                        ? subject.departments
+                        : [];
+
+
+                return departments.some(
+                    examDepartment => {
+
+                        const normalized =
+                            normalizeDepartment(
+                                examDepartment
+                            );
+
+
+                        /*
+                           BCOM.CA/CP represents
+                           both BCOM.CA and BCOM.CP.
+                        */
+
+                        if (
+                            normalized ===
+                            "BCOM.CA/CP"
+                        ) {
+
+                            return (
+                                studentDepartment ===
+                                    "BCOM.CA" ||
+                                studentDepartment ===
+                                    "BCOM.CP"
+                            );
+
+                        }
+
+
+                        return (
+                            normalized ===
+                            studentDepartment
+                        );
+
+                    }
+                );
+
+            }
+        );
+
+
+    if (!matchingSubject) {
+
+        return "UNKNOWN_PAPER";
+
+    }
+
+
+    /*
+       Prefer subject code.
+    */
+
+    if (
+        matchingSubject.subjectCode &&
+        String(
+            matchingSubject.subjectCode
+        ).trim()
+    ) {
+
+        return String(
+            matchingSubject.subjectCode
+        )
+            .trim()
+            .toUpperCase();
+
+    }
+
+
+    /*
+       Otherwise use subject name.
+    */
+
+    if (
+        matchingSubject.subjectName &&
+        String(
+            matchingSubject.subjectName
+        ).trim()
+    ) {
+
+        return String(
+            matchingSubject.subjectName
+        )
+            .trim()
+            .toUpperCase();
+
+    }
+
+
+    return "UNKNOWN_PAPER";
+
+}
+/* ==========================================
+   CHECK BENCH COMPATIBILITY
+========================================== */
+
+function canSitTogether(
+    firstStudent,
+    secondStudent,
+    currentBenchStudents = []
+) {
+
+    const studentsOnBench = [
+        ...currentBenchStudents
+    ];
+
+    /*
+       --------------------------------------
+       RULE 1
+       Different departments only
+       --------------------------------------
+    */
+
+    const firstDepartment =
+        normalizeDepartment(
+            firstStudent?.department
+        );
+
+    const secondDepartment =
+        normalizeDepartment(
+            secondStudent?.department
+        );
+
+    if (
+        firstDepartment &&
+        secondDepartment &&
+        firstDepartment ===
+            secondDepartment
+    ) {
+
+        return false;
+
+    }
+
+
+    /*
+       --------------------------------------
+       RULE 2
+       Same paper cannot share bench
+       --------------------------------------
+    */
+
+    const firstPaper =
+        getStudentPaperKey(
+            firstStudent
+        );
+
+    const secondPaper =
+        getStudentPaperKey(
+            secondStudent
+        );
+
+    if (
+        firstPaper &&
+        secondPaper &&
+        firstPaper === secondPaper
+    ) {
+
+        return false;
+
+    }
+
+
+    /*
+       --------------------------------------
+       Check against every student already
+       placed on this bench.
+       --------------------------------------
+    */
+
+    for (
+        const existingStudent
+        of studentsOnBench
+    ) {
+
+        const existingDepartment =
+            normalizeDepartment(
+                existingStudent?.department
+            );
+
+        const existingPaper =
+            getStudentPaperKey(
+                existingStudent
+            );
+
+
+        /*
+           Same department
+        */
+
+        if (
+            existingDepartment &&
+            firstDepartment &&
+            existingDepartment ===
+                firstDepartment
+        ) {
+
+            return false;
+
+        }
+
+
+        /*
+           Same paper
+        */
+
+        if (
+            existingPaper &&
+            firstPaper &&
+            existingPaper ===
+                firstPaper
+        ) {
+
+            return false;
+
+        }
+
+    }
+
+
+    return true;
 
 }
 
+
+/* ==========================================
+   CREATE VALID BENCH GROUP
+========================================== */
+
+function createBenchGroup(
+    availableStudents,
+    benchSize
+) {
+
+    if (
+        !Array.isArray(
+            availableStudents
+        ) ||
+        availableStudents.length === 0
+    ) {
+
+        return null;
+
+    }
+
+
+    /*
+       Start with the student who has the
+       highest number of remaining students
+       from the same department.
+
+       This helps prevent one department
+       getting stranded near the end.
+    */
+
+    const departmentCounts = {};
+
+    availableStudents.forEach(
+        student => {
+
+            const department =
+                normalizeDepartment(
+                    student?.department
+                ) || "UNKNOWN";
+
+            departmentCounts[department] =
+                (
+                    departmentCounts[
+                        department
+                    ] || 0
+                ) + 1;
+
+        }
+    );
+
+
+    const sortedStudents =
+        [...availableStudents].sort(
+            (a, b) => {
+
+                const deptA =
+                    normalizeDepartment(
+                        a?.department
+                    ) || "UNKNOWN";
+
+                const deptB =
+                    normalizeDepartment(
+                        b?.department
+                    ) || "UNKNOWN";
+
+                return (
+                    departmentCounts[deptB] -
+                    departmentCounts[deptA]
+                );
+
+            }
+        );
+
+
+    /*
+       Try each possible first student.
+
+       This gives us a much better chance of
+       finding a valid combination than simply
+       taking students in database order.
+    */
+
+    for (
+        const firstStudent
+        of sortedStudents
+    ) {
+
+        const group = [
+            firstStudent
+        ];
+
+
+        /*
+           Candidates must be compatible with
+           everybody already on the bench.
+        */
+
+        const candidates =
+            availableStudents
+                .filter(
+                    student =>
+                        student !==
+                        firstStudent
+                )
+                .filter(
+                    student =>
+                        canSitTogether(
+                            student,
+                            firstStudent,
+                            group
+                        )
+                );
+
+
+        /*
+           Prefer candidates whose department
+           and paper are less represented in the
+           remaining students.
+        */
+
+        candidates.sort(
+            (a, b) => {
+
+                const deptA =
+                    normalizeDepartment(
+                        a?.department
+                    ) || "UNKNOWN";
+
+                const deptB =
+                    normalizeDepartment(
+                        b?.department
+                    ) || "UNKNOWN";
+
+                return (
+                    (
+                        departmentCounts[
+                            deptB
+                        ] || 0
+                    ) -
+                    (
+                        departmentCounts[
+                            deptA
+                        ] || 0
+                    )
+                );
+
+            }
+        );
+
+
+        for (
+            const candidate
+            of candidates
+        ) {
+
+            if (
+                canSitTogether(
+                    candidate,
+                    firstStudent,
+                    group
+                )
+            ) {
+
+                group.push(
+                    candidate
+                );
+
+            }
+
+
+            if (
+                group.length >=
+                benchSize
+            ) {
+
+                return group;
+
+            }
+
+        }
+
+    }
+
+
+    /*
+       No valid group found.
+    */
+
+    return null;
+
+}
+
+
+/* ==========================================
+   BUILD COMPLETE VALID SEATING
+========================================== */
+
+function createValidSeatingOrder(
+    studentList,
+    benchDefinitions
+) {
+
+    if (
+        !Array.isArray(studentList) ||
+        !Array.isArray(benchDefinitions)
+    ) {
+
+        return null;
+
+    }
+
+
+    let remainingStudents =
+        [...studentList];
+
+    const result = [];
+
+
+    /*
+       Process each physical bench.
+    */
+
+    for (
+        const bench
+        of benchDefinitions
+    ) {
+
+        if (
+            remainingStudents.length === 0
+        ) {
+
+            break;
+
+        }
+
+
+        const benchSize =
+            bench.seats.length;
+
+
+        /*
+           If fewer students remain than
+           the physical bench size, we can
+           use the remaining students only if
+           the room physically permits it.
+        */
+
+        const actualBenchSize =
+            Math.min(
+                benchSize,
+                remainingStudents.length
+            );
+
+
+        const group =
+            createBenchGroup(
+                remainingStudents,
+                actualBenchSize
+            );
+
+
+        if (!group) {
+
+            return {
+                success: false,
+
+                reason:
+                    `Unable to create a valid bench in Room ${bench.roomNumber}, Column ${bench.column}, Bench ${bench.bench}.`
+            };
+
+        }
+
+
+        /*
+           Add students to the result in the
+           exact physical seat order.
+        */
+
+        group.forEach(
+            (student, index) => {
+
+                const physicalSeat =
+                    bench.seats[index];
+
+                result.push({
+
+                    student,
+
+                    physicalSeat
+
+                });
+
+            }
+        );
+
+
+        /*
+           Remove allocated students.
+        */
+
+        const allocatedRegisters =
+            new Set(
+                group.map(
+                    student =>
+                        getRegisterNumber(
+                            student
+                        )
+                )
+            );
+
+
+        remainingStudents =
+            remainingStudents.filter(
+                student =>
+                    !allocatedRegisters.has(
+                        getRegisterNumber(
+                            student
+                        )
+                    )
+            );
+
+    }
+
+
+    /*
+       If anybody remains, capacity/rules
+       could not accommodate them.
+    */
+
+    if (
+        remainingStudents.length > 0
+    ) {
+
+        return {
+
+            success: false,
+
+            reason:
+                `${remainingStudents.length} students could not be seated while maintaining the seating rules.`
+
+        };
+
+    }
+
+
+    return {
+
+        success: true,
+
+        allocations: result
+
+    };
+
+}
+
+/* ==========================================
+   CHECK IF STUDENTS CAN SHARE A BENCH
+========================================== */
+
+function canShareBench(existingStudents, candidate) {
+
+    if (!Array.isArray(existingStudents)) {
+        return true;
+    }
+
+    const candidateDepartment =
+        normalizeDepartment(
+            candidate?.department
+        );
+
+    const candidatePaper =
+        getStudentPaperKey(candidate);
+
+    const candidateBatch =
+        getStudentBatchId(candidate);
+
+    for (const existingStudent of existingStudents) {
+
+        const existingDepartment =
+            normalizeDepartment(
+                existingStudent?.department
+            );
+
+        const existingPaper =
+            getStudentPaperKey(existingStudent);
+
+        const existingBatch =
+            getStudentBatchId(existingStudent);
+
+        /* ======================================
+           RULE 1 — SAME PAPER = NEVER
+        ====================================== */
+
+        if (
+            candidatePaper &&
+            existingPaper &&
+            candidatePaper !== "UNKNOWN" &&
+            existingPaper !== "UNKNOWN" &&
+            candidatePaper === existingPaper
+        ) {
+
+            return false;
+
+        }
+
+
+        /* ======================================
+           RULE 2 — SAME DEPARTMENT
+           SAME BATCH = NOT ALLOWED
+        ====================================== */
+
+        if (
+            candidateDepartment &&
+            existingDepartment &&
+            candidateDepartment === existingDepartment
+        ) {
+
+            /*
+               Different batches are allowed
+               on the same bench.
+            */
+
+            if (
+                !candidateBatch ||
+                !existingBatch ||
+                candidateBatch === existingBatch
+            ) {
+
+                return false;
+
+            }
+
+        }
+
+    }
+
+    return true;
+
+}
 
 /* ==========================================
    GENERATION PROGRESS
@@ -1742,70 +3057,346 @@ async function generateSeating() {
 
     await wait(500);
 
+/* --------------------------------------
+   STEP 5
+-------------------------------------- */
 
-    /* --------------------------------------
-       STEP 5
-    -------------------------------------- */
+updateGenerationProgress(
+    70,
+    "Creating valid mixed benches..."
+);
 
-    updateGenerationProgress(
-        70,
-        "Assigning students to physical seats..."
+seating = [];
+
+
+/* =========================================================
+   NATURAL REGISTER NUMBER SORT
+========================================================= */
+
+function compareRegisterNumbers(a, b) {
+
+    const regA =
+        String(
+            getRegisterNumber(a) || ""
+        ).toUpperCase();
+
+    const regB =
+        String(
+            getRegisterNumber(b) || ""
+        ).toUpperCase();
+
+
+    const matchA =
+        regA.match(/^(.*?)(\d+)$/);
+
+    const matchB =
+        regB.match(/^(.*?)(\d+)$/);
+
+
+    if (
+        matchA &&
+        matchB
+    ) {
+
+        const prefixA =
+            matchA[1];
+
+        const prefixB =
+            matchB[1];
+
+
+        if (
+            prefixA !== prefixB
+        ) {
+
+            return prefixA.localeCompare(
+                prefixB
+            );
+
+        }
+
+
+        return (
+            Number(matchA[2]) -
+            Number(matchB[2])
+        );
+
+    }
+
+
+    return regA.localeCompare(
+        regB,
+        undefined,
+        {
+            numeric: true
+        }
+    );
+
+}
+
+
+/* =========================================================
+   STUDENT GROUP KEY
+========================================================= */
+
+function getLocalStudentGroupKey(student) {
+
+    const department =
+        normalizeDepartment(
+            student?.department
+        ) ||
+        "UNKNOWN_DEPARTMENT";
+
+
+    const batch =
+        getStudentBatchId(
+            student
+        ) ||
+        "UNKNOWN_BATCH";
+
+
+    const paper =
+        getStudentPaperKey(
+            student
+        ) ||
+        "UNKNOWN_PAPER";
+
+
+    return [
+        department,
+        batch,
+        paper
+    ].join("|");
+
+}
+
+
+/* =========================================================
+   CREATE ALL PHYSICAL BENCH SLOTS
+=========================================================
+
+   IMPORTANT:
+
+   At this stage we IGNORE rooms.
+
+   We only care about the physical number
+   of seats available.
+
+   Rooms will be assigned AFTER valid benches
+   are created.
+========================================================= */
+
+const physicalBenchSlots = [];
+
+
+rooms.forEach(
+    room => {
+
+        const rowsLeft =
+            Number(
+                room?.rowsLeft || 0
+            );
+
+
+        const rowsRight =
+            Number(
+                room?.rowsRight || 0
+            );
+
+
+        const studentsPerBench =
+            Number(
+                room?.studentsPerBench || 0
+            );
+
+
+        if (
+            studentsPerBench !== 2 &&
+            studentsPerBench !== 3
+        ) {
+
+            return;
+
+        }
+
+
+        /*
+           COLUMN A
+        */
+
+        for (
+            let bench = 1;
+            bench <= rowsLeft;
+            bench++
+        ) {
+
+            physicalBenchSlots.push({
+
+                roomId:
+                    room._id,
+
+                roomNumber:
+                    room.roomNumber,
+
+                column:
+                    "A",
+
+                bench,
+
+                capacity:
+                    studentsPerBench
+
+            });
+
+        }
+
+
+        /*
+           COLUMN B
+        */
+
+        for (
+            let bench = 1;
+            bench <= rowsRight;
+            bench++
+        ) {
+
+            physicalBenchSlots.push({
+
+                roomId:
+                    room._id,
+
+                roomNumber:
+                    room.roomNumber,
+
+                column:
+                    "B",
+
+                bench,
+
+                capacity:
+                    studentsPerBench
+
+            });
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   CAPACITY CHECK
+========================================================= */
+
+const physicalCapacity =
+    physicalBenchSlots.reduce(
+        (
+            total,
+            bench
+        ) =>
+            total +
+            bench.capacity,
+        0
     );
 
 
-    seating = [];
+if (
+    students.length >
+    physicalCapacity
+) {
+
+    Swal.close();
 
 
-    orderedStudents.forEach(
-        (
-            student,
-            index
-        ) => {
-
-            const physicalSeat =
-                allSeats[index];
+    await showAlert(
+        "Insufficient Capacity",
+        `${students.length} students require seats, but only ${physicalCapacity} physical seats are available.`,
+        "error"
+    );
 
 
-            if (!physicalSeat) {
+    return;
 
-                return;
-
-            }
+}
 
 
-            seating.push({
+/* =========================================================
+   GROUP STUDENTS
+========================================================= */
 
-                registerNumber:
-                    getRegisterNumber(
+const groupedStudents =
+    new Map();
+
+
+students.forEach(
+    student => {
+
+        const key =
+            getLocalStudentGroupKey(
+                student
+            );
+
+
+        if (
+            !groupedStudents.has(key)
+        ) {
+
+            groupedStudents.set(
+                key,
+                []
+            );
+
+        }
+
+
+        groupedStudents
+            .get(key)
+            .push(student);
+
+    }
+);
+
+
+/*
+   Sort every group naturally.
+
+   This is important because later, when
+   we put class blocks into rooms, the
+   register numbers remain natural.
+*/
+
+groupedStudents.forEach(
+    group => {
+
+        group.sort(
+            compareRegisterNumbers
+        );
+
+    }
+);
+
+
+/* =========================================================
+   BUILD WORKING STUDENT POOL
+========================================================= */
+
+function createWorkingPool() {
+
+    const pool = [];
+
+
+    students.forEach(
+        student => {
+
+            pool.push({
+
+                student,
+
+                groupKey:
+                    getLocalStudentGroupKey(
                         student
-                    ),
-
-                name:
-                    student.name ||
-                    "",
-
-                department:
-                    student.department ||
-                    "",
-
-                semester:
-                    student.semester ||
-                    "",
-
-                roomId:
-                    physicalSeat.roomId,
-
-                roomNumber:
-                    physicalSeat.roomNumber,
-
-                bench:
-                    physicalSeat.bench,
-
-                column:
-                    physicalSeat.column,
-
-                seat:
-                    physicalSeat.seat
+                    )
 
             });
 
@@ -1813,7 +3404,2653 @@ async function generateSeating() {
     );
 
 
-    await wait(500);
+    return pool;
+
+}
+
+
+/* =========================================================
+   FIND BEST FIRST STUDENT
+=========================================================
+
+   We prefer students belonging to the largest
+   remaining group.
+
+   This prevents a small class from becoming
+   stranded at the end.
+========================================================= */
+
+function chooseSeedStudent(
+    pool
+) {
+
+    if (
+        !pool.length
+    ) {
+
+        return null;
+
+    }
+
+
+    const groupCounts =
+        new Map();
+
+
+    pool.forEach(
+        item => {
+
+            const count =
+                groupCounts.get(
+                    item.groupKey
+                ) || 0;
+
+
+            groupCounts.set(
+                item.groupKey,
+                count + 1
+            );
+
+        }
+    );
+
+
+    const sorted =
+        [...pool].sort(
+            (
+                a,
+                b
+            ) => {
+
+                const countA =
+                    groupCounts.get(
+                        a.groupKey
+                    ) || 0;
+
+
+                const countB =
+                    groupCounts.get(
+                        b.groupKey
+                    ) || 0;
+
+
+                /*
+                   Larger groups first.
+                */
+
+                if (
+                    countA !==
+                    countB
+                ) {
+
+                    return (
+                        countB -
+                        countA
+                    );
+
+                }
+
+
+                /*
+                   Then natural register order.
+                */
+
+                return compareRegisterNumbers(
+                    a.student,
+                    b.student
+                );
+
+            }
+        );
+
+
+    /*
+       Take from the first few students
+       of the largest group.
+
+       Small randomness prevents the exact
+       same failed arrangement every time.
+    */
+
+    const topCount =
+        Math.min(
+            5,
+            sorted.length
+        );
+
+
+    return sorted[
+        Math.floor(
+            Math.random() *
+            topCount
+        )
+    ];
+
+}
+
+
+/* =========================================================
+   FIND COMPATIBLE STUDENT
+========================================================= */
+
+function chooseCompatibleStudent(
+    currentBench,
+    pool,
+    excludedKeys
+) {
+
+    const candidates = [];
+
+
+    for (
+        const item
+        of pool
+    ) {
+
+        if (
+            excludedKeys.has(
+                item.student
+            )
+        ) {
+
+            continue;
+
+        }
+
+
+        if (
+            canShareBench(
+                currentBench,
+                item.student
+            )
+        ) {
+
+            candidates.push(
+                item
+            );
+
+        }
+
+    }
+
+
+    if (
+        !candidates.length
+    ) {
+
+        return null;
+
+    }
+
+
+    /*
+       Count how many students remain
+       from each group.
+    */
+
+    const groupCounts =
+        new Map();
+
+
+    pool.forEach(
+        item => {
+
+            const count =
+                groupCounts.get(
+                    item.groupKey
+                ) || 0;
+
+
+            groupCounts.set(
+                item.groupKey,
+                count + 1
+            );
+
+        }
+    );
+
+
+    candidates.sort(
+        (
+            a,
+            b
+        ) => {
+
+            const countA =
+                groupCounts.get(
+                    a.groupKey
+                ) || 0;
+
+
+            const countB =
+                groupCounts.get(
+                    b.groupKey
+                ) || 0;
+
+
+            /*
+               Prefer larger groups.
+
+               This helps keep class ranges
+               together later.
+            */
+
+            if (
+                countA !==
+                countB
+            ) {
+
+                return (
+                    countB -
+                    countA
+                );
+
+            }
+
+
+            return compareRegisterNumbers(
+                a.student,
+                b.student
+            );
+
+        }
+    );
+
+
+    /*
+       Pick from the top compatible candidates.
+    */
+
+    const topCount =
+        Math.min(
+            5,
+            candidates.length
+        );
+
+
+    return candidates[
+        Math.floor(
+            Math.random() *
+            topCount
+        )
+    ];
+
+}
+
+
+/* =========================================================
+   BUILD ONE COMPLETE VALID BENCH
+========================================================= */
+
+function createValidBench(
+    pool,
+    capacity
+) {
+
+    if (
+        !pool.length
+    ) {
+
+        return null;
+
+    }
+
+
+    const seed =
+        chooseSeedStudent(
+            pool
+        );
+
+
+    if (
+        !seed
+    ) {
+
+        return null;
+
+    }
+
+
+    const benchStudents = [
+        seed.student
+    ];
+
+
+    const used =
+        new Set();
+
+
+    used.add(
+        seed.student
+    );
+
+
+    while (
+        benchStudents.length <
+        capacity
+    ) {
+
+        const next =
+            chooseCompatibleStudent(
+                benchStudents,
+                pool,
+                used
+            );
+
+
+        if (
+            !next
+        ) {
+
+            /*
+               This bench could not be filled.
+            */
+
+            return null;
+
+        }
+
+
+        benchStudents.push(
+            next.student
+        );
+
+
+        used.add(
+            next.student
+        );
+
+    }
+
+
+    /*
+       Final strict validation.
+    */
+
+    for (
+        let i = 0;
+        i <
+        benchStudents.length;
+        i++
+    ) {
+
+        for (
+            let j = i + 1;
+            j <
+            benchStudents.length;
+            j++
+        ) {
+
+            if (
+                !canShareBench(
+                    [benchStudents[i]],
+                    benchStudents[j]
+                )
+            ) {
+
+                return null;
+
+            }
+
+        }
+
+    }
+
+
+    return benchStudents;
+
+}
+
+
+/* =========================================================
+   REMOVE STUDENTS FROM POOL
+========================================================= */
+
+function removeBenchStudents(
+    pool,
+    benchStudents
+) {
+
+    const used =
+        new Set(
+            benchStudents
+        );
+
+
+    return pool.filter(
+        item =>
+            !used.has(
+                item.student
+            )
+    );
+
+}
+
+/* =========================================================
+   GLOBAL VALID SEATING GENERATION
+=========================================================
+
+   IMPORTANT:
+
+   We build benches from CLASS GROUP QUEUES.
+
+   Each group is:
+
+   Department + Batch + Paper
+
+   Students inside every group are already sorted
+   naturally by register number.
+
+   Example:
+
+   BCOM.CA | Batch 2024 | Paper X
+
+   MD24CCAR001
+   MD24CCAR002
+   MD24CCAR003
+   MD24CCAR004
+   ...
+
+   We always consume them in this order.
+
+========================================================= */
+
+
+/* =========================================================
+   BUILD GROUP QUEUES
+========================================================= */
+
+function createGroupQueues() {
+
+    return [
+        ...groupedStudents.entries()
+    ]
+    .map(
+        (
+            [key, groupStudents]
+        ) => ({
+
+            key,
+
+            students:
+                [...groupStudents],
+
+            index:
+                0
+
+        })
+    );
+
+}
+
+
+/* =========================================================
+   REMAINING STUDENTS IN GROUP
+========================================================= */
+
+function getGroupRemaining(
+    group
+) {
+
+    return (
+        group.students.length -
+        group.index
+    );
+
+}
+
+
+/* =========================================================
+   GET NEXT STUDENT FROM GROUP
+========================================================= */
+
+function getGroupHead(
+    group
+) {
+
+    if (
+        !group ||
+        group.index >=
+        group.students.length
+    ) {
+
+        return null;
+
+    }
+
+    return group.students[
+        group.index
+    ];
+
+}
+
+
+/* =========================================================
+   CHECK GROUP COMPATIBILITY
+========================================================= */
+
+function canGroupJoinBench(
+    selectedGroups,
+    candidateGroup
+) {
+
+    const candidate =
+        getGroupHead(
+            candidateGroup
+        );
+
+    if (!candidate) {
+
+        return false;
+
+    }
+
+
+    const currentStudents =
+        selectedGroups
+            .map(
+                group =>
+                    getGroupHead(
+                        group
+                    )
+            )
+            .filter(Boolean);
+
+
+    return canShareBench(
+        currentStudents,
+        candidate
+    );
+
+}
+
+
+/* =========================================================
+   FIND COMPATIBLE GROUP COMBINATION
+========================================================= */
+
+function findCompatibleGroupCombination(
+    queues,
+    capacity
+) {
+
+    const activeGroups =
+        queues.filter(
+            group =>
+                getGroupRemaining(
+                    group
+                ) > 0
+        );
+
+
+    if (
+        activeGroups.length <
+        capacity
+    ) {
+
+        return null;
+
+    }
+
+
+    /*
+       Larger groups first.
+
+       This keeps large classes moving
+       continuously instead of leaving
+       scattered leftovers.
+    */
+
+    const seedGroups =
+        [...activeGroups]
+            .sort(
+                (
+                    a,
+                    b
+                ) => {
+
+                    const countDifference =
+                        getGroupRemaining(b) -
+                        getGroupRemaining(a);
+
+                    if (
+                        countDifference !== 0
+                    ) {
+
+                        return countDifference;
+
+                    }
+
+
+                    return compareRegisterNumbers(
+                        getGroupHead(a),
+                        getGroupHead(b)
+                    );
+
+                }
+            );
+
+
+    /*
+       Try the largest groups first.
+
+       If one combination gets stuck,
+       try another group.
+    */
+
+    const maxSeeds =
+        Math.min(
+            20,
+            seedGroups.length
+        );
+
+
+    for (
+        let seedIndex = 0;
+        seedIndex < maxSeeds;
+        seedIndex++
+    ) {
+
+        const seed =
+            seedGroups[
+                seedIndex
+            ];
+
+
+        const selected = [
+            seed
+        ];
+
+
+        /*
+           Recursive search.
+
+           This is important because a simple
+           greedy choice can create an impossible
+           final group.
+        */
+
+        function searchCombination() {
+
+            if (
+                selected.length ===
+                capacity
+            ) {
+
+                return [
+                    ...selected
+                ];
+
+            }
+
+
+            const candidates =
+                activeGroups
+                    .filter(
+                        group =>
+                            !selected.includes(
+                                group
+                            ) &&
+                            canGroupJoinBench(
+                                selected,
+                                group
+                            )
+                    )
+                    .sort(
+                        (
+                            a,
+                            b
+                        ) => {
+
+                            const remainingDifference =
+                                getGroupRemaining(b) -
+                                getGroupRemaining(a);
+
+                            if (
+                                remainingDifference !== 0
+                            ) {
+
+                                return remainingDifference;
+
+                            }
+
+
+                            return compareRegisterNumbers(
+                                getGroupHead(a),
+                                getGroupHead(b)
+                            );
+
+                        }
+                    );
+
+
+            /*
+               Small random variation.
+
+               This allows another global attempt
+               to produce a different valid pattern.
+            */
+
+            if (
+                candidates.length > 1
+            ) {
+
+                const top =
+                    Math.min(
+                        5,
+                        candidates.length
+                    );
+
+
+                const firstCandidates =
+                    candidates.slice(
+                        0,
+                        top
+                    );
+
+
+                firstCandidates.sort(
+                    () =>
+                        Math.random() - 0.5
+                );
+
+
+                candidates.splice(
+                    0,
+                    top,
+                    ...firstCandidates
+                );
+
+            }
+
+
+            /*
+               Try candidates one by one.
+            */
+
+            for (
+                const candidate
+                of candidates
+            ) {
+
+                selected.push(
+                    candidate
+                );
+
+
+                const result =
+                    searchCombination();
+
+
+                if (result) {
+
+                    return result;
+
+                }
+
+
+                selected.pop();
+
+            }
+
+
+            return null;
+
+        }
+
+
+        const result =
+            searchCombination();
+
+
+        if (result) {
+
+            return result;
+
+        }
+
+    }
+
+
+    return null;
+
+}
+
+
+/* =========================================================
+   BUILD CAPACITY PLAN
+=========================================================
+
+   Example:
+
+   632 students
+   633 physical seats
+
+   becomes:
+
+   210 benches × 3 students
+   1 bench × 2 students
+
+   This avoids creating unnecessary
+   one-student leftovers.
+
+========================================================= */
+
+function buildBenchCapacityPlan() {
+
+    const threeSeatCount =
+        physicalBenchSlots.filter(
+            slot =>
+                slot.capacity === 3
+        ).length;
+
+
+    const twoSeatCount =
+        physicalBenchSlots.filter(
+            slot =>
+                slot.capacity === 2
+        ).length;
+
+
+    const totalStudents =
+        students.length;
+
+
+    /*
+       Try the maximum possible number
+       of full 3-student benches first.
+    */
+
+    for (
+        let fullThreeBenches =
+            Math.min(
+                threeSeatCount,
+                Math.floor(
+                    totalStudents / 3
+                )
+            );
+
+        fullThreeBenches >= 0;
+
+        fullThreeBenches--
+    ) {
+
+        const remainingAfterThree =
+            totalStudents -
+            (
+                fullThreeBenches * 3
+            );
+
+
+        /*
+           Remaining students can occupy
+           2-student benches.
+
+           A 2-student group can also use
+           a 3-seat physical bench.
+        */
+
+        const remainingPhysicalSlots =
+            (
+                threeSeatCount -
+                fullThreeBenches
+            ) +
+            twoSeatCount;
+
+
+        const maxTwoBenches =
+            Math.min(
+                Math.floor(
+                    remainingAfterThree / 2
+                ),
+                remainingPhysicalSlots
+            );
+
+
+        for (
+            let twoBenches =
+                maxTwoBenches;
+
+            twoBenches >= 0;
+
+            twoBenches--
+        ) {
+
+            const remaining =
+                remainingAfterThree -
+                (
+                    twoBenches * 2
+                );
+
+
+            /*
+               No leftover.
+            */
+
+            if (
+                remaining === 0
+            ) {
+
+                return [
+                    ...Array(
+                        fullThreeBenches
+                    ).fill(3),
+
+                    ...Array(
+                        twoBenches
+                    ).fill(2)
+                ];
+
+            }
+
+        }
+
+
+    }
+
+
+    return null;
+
+}
+
+
+/* =========================================================
+   FIND PHYSICAL SLOT FOR BENCH
+========================================================= */
+
+function findPhysicalSlotForCapacity(
+    availableSlots,
+    requiredCapacity
+) {
+
+    /*
+       Exact capacity first.
+    */
+
+    let index =
+        availableSlots.findIndex(
+            slot =>
+                slot.capacity ===
+                requiredCapacity
+        );
+
+
+    if (
+        index !== -1
+    ) {
+
+        return availableSlots.splice(
+            index,
+            1
+        )[0];
+
+    }
+
+
+    /*
+       A smaller group can use a larger
+       physical bench.
+    */
+
+    index =
+        availableSlots.findIndex(
+            slot =>
+                slot.capacity >=
+                requiredCapacity
+        );
+
+
+    if (
+        index !== -1
+    ) {
+
+        return availableSlots.splice(
+            index,
+            1
+        )[0];
+
+    }
+
+
+    return null;
+
+}
+
+
+/* =========================================================
+   GLOBAL GENERATION
+========================================================= */
+
+let successfulBenchGroups =
+    null;
+
+
+const MAX_GLOBAL_ATTEMPTS =
+    500;
+
+
+const capacityPlan =
+    buildBenchCapacityPlan();
+
+
+if (
+    !capacityPlan
+) {
+
+    Swal.close();
+
+
+    await showAlert(
+        "Capacity Configuration Error",
+        "SmartSeat could not create a valid bench-size plan from the configured rooms.",
+        "error"
+    );
+
+
+    seating = [];
+
+
+    updateStatistics();
+
+    renderSeatingTable();
+
+
+    return;
+
+}
+
+
+/* =========================================================
+   TRY GLOBAL ARRANGEMENT
+========================================================= */
+
+for (
+    let attempt = 1;
+
+    attempt <=
+    MAX_GLOBAL_ATTEMPTS;
+
+    attempt++
+) {
+
+    if (
+        attempt === 1 ||
+        attempt % 25 === 0
+    ) {
+
+        updateGenerationProgress(
+            70,
+            `Creating valid class-wise benches... ${attempt}/${MAX_GLOBAL_ATTEMPTS}`
+        );
+
+    }
+
+
+    const queues =
+        createGroupQueues();
+
+
+    const generatedBenches =
+        [];
+
+
+    let failed =
+        false;
+
+
+    /*
+       Build every bench.
+
+       Students are taken from the HEAD
+       of their class group queue.
+
+       Therefore:
+
+       001 → 002 → 003 → 004
+
+       is preserved.
+    */
+
+    for (
+        const capacity
+        of capacityPlan
+    ) {
+
+        if (
+            queues.every(
+                group =>
+                    getGroupRemaining(
+                        group
+                    ) === 0
+            )
+        ) {
+
+            break;
+
+        }
+
+
+        const selectedGroups =
+            findCompatibleGroupCombination(
+                queues,
+                capacity
+            );
+
+
+        if (
+            !selectedGroups
+        ) {
+
+            failed =
+                true;
+
+            break;
+
+        }
+
+
+        const benchStudents =
+            selectedGroups.map(
+                group => {
+
+                    const student =
+                        getGroupHead(
+                            group
+                        );
+
+
+                    group.index++;
+
+
+                    return student;
+
+                }
+            );
+
+
+        /*
+           Strict validation immediately.
+        */
+
+        let valid =
+            true;
+
+
+        for (
+            let i = 0;
+
+            i <
+            benchStudents.length;
+
+            i++
+        ) {
+
+            for (
+                let j = i + 1;
+
+                j <
+                benchStudents.length;
+
+                j++
+            ) {
+
+                if (
+                    !canShareBench(
+                        [benchStudents[i]],
+                        benchStudents[j]
+                    )
+                ) {
+
+                    valid =
+                        false;
+
+                    break;
+
+                }
+
+            }
+
+
+            if (
+                !valid
+            ) {
+
+                break;
+
+            }
+
+        }
+
+
+        if (
+            !valid
+        ) {
+
+            failed =
+                true;
+
+            break;
+
+        }
+
+
+        /*
+           The first group becomes the
+           room-order anchor.
+
+           This is what allows us to create
+           visible class blocks later.
+        */
+
+        generatedBenches.push({
+
+            capacity,
+
+            students:
+                benchStudents,
+
+            primaryGroup:
+                selectedGroups[0].key
+
+        });
+
+    }
+
+
+    if (
+        failed
+    ) {
+
+        continue;
+
+    }
+
+
+    /*
+       Verify that every student was consumed.
+    */
+
+    const remainingStudents =
+        queues.reduce(
+            (
+                total,
+                group
+            ) =>
+                total +
+                getGroupRemaining(
+                    group
+                ),
+            0
+        );
+
+
+    if (
+        remainingStudents !== 0
+    ) {
+
+        continue;
+
+    }
+
+
+    /*
+       Verify total count.
+    */
+
+    const generatedCount =
+        generatedBenches.reduce(
+            (
+                total,
+                bench
+            ) =>
+                total +
+                bench.students.length,
+            0
+        );
+
+
+    if (
+        generatedCount !==
+        students.length
+    ) {
+
+        continue;
+
+    }
+
+
+    /*
+       Final strict bench validation.
+    */
+
+    let allValid =
+        true;
+
+
+    for (
+        const bench
+        of generatedBenches
+    ) {
+
+        for (
+            let i = 0;
+
+            i <
+            bench.students.length;
+
+            i++
+        ) {
+
+            for (
+                let j = i + 1;
+
+                j <
+                bench.students.length;
+
+                j++
+            ) {
+
+                if (
+                    !canShareBench(
+                        [bench.students[i]],
+                        bench.students[j]
+                    )
+                ) {
+
+                    allValid =
+                        false;
+
+                    break;
+
+                }
+
+            }
+
+
+            if (
+                !allValid
+            ) {
+
+                break;
+
+            }
+
+        }
+
+
+        if (
+            !allValid
+        ) {
+
+            break;
+
+        }
+
+    }
+
+
+    if (
+        allValid
+    ) {
+
+        successfulBenchGroups =
+            generatedBenches;
+
+        break;
+
+    }
+
+}
+
+
+/* =========================================================
+   GLOBAL GENERATION FAILED
+========================================================= */
+
+if (
+    !successfulBenchGroups
+) {
+
+    Swal.close();
+
+
+    await showAlert(
+        "Seating Rules Could Not Be Satisfied",
+        "SmartSeat could not create a valid combination of department, batch and paper groups. No students were partially allocated.",
+        "error"
+    );
+
+
+    seating = [];
+
+
+    updateStatistics();
+
+    renderSeatingTable();
+
+
+    return;
+
+}
+
+/* =========================================================
+   ARRANGE VALID BENCHES INTO TEACHER-STYLE ROOM BLOCKS
+========================================================= */
+
+updateGenerationProgress(
+    84,
+    "Arranging valid benches into teacher-style room blocks..."
+);
+
+
+/*
+   IMPORTANT:
+
+   The benches are ALREADY valid.
+
+   We do NOT change the students inside a bench.
+
+   We only decide WHICH valid bench goes into
+   WHICH room.
+
+   Goal:
+
+   Room 1
+   -------------------------
+   BCOM.CA
+   BCOM.CP
+   BBA.TTM
+
+   Room 2
+   -------------------------
+   BBA.TTM
+   BA.ENG
+   BA.ECO
+
+   etc.
+
+   We try to keep students from the same
+   class/group together instead of scattering
+   them across many rooms.
+*/
+
+
+/* =========================================================
+   GET GROUP KEYS FROM A BENCH
+========================================================= */
+
+function getBenchGroupKeys(
+    bench
+) {
+
+    return [
+        ...new Set(
+            bench.students.map(
+                student =>
+                    getLocalStudentGroupKey(
+                        student
+                    )
+            )
+        )
+    ];
+
+}
+
+
+/* =========================================================
+   BENCH REGISTER ORDER
+========================================================= */
+
+function getBenchFirstStudent(
+    bench
+) {
+
+    return [...bench.students]
+        .sort(
+            compareRegisterNumbers
+        )[0];
+
+}
+
+
+/* =========================================================
+   REMAINING BENCHES
+========================================================= */
+
+const remainingRoomBenches =
+    [...successfulBenchGroups];
+
+
+/* =========================================================
+   COUNT HOW MANY BENCHES BELONG TO EACH GROUP
+========================================================= */
+
+const groupBenchCounts =
+    new Map();
+
+
+remainingRoomBenches.forEach(
+    bench => {
+
+        const groupKeys =
+            getBenchGroupKeys(
+                bench
+            );
+
+        groupKeys.forEach(
+            key => {
+
+                groupBenchCounts.set(
+                    key,
+                    (
+                        groupBenchCounts.get(
+                            key
+                        ) || 0
+                    ) + 1
+                );
+
+            }
+        );
+
+    }
+);
+
+
+/* =========================================================
+   UPDATE GROUP COUNTS AFTER USING A BENCH
+========================================================= */
+
+function removeBenchFromGroupCounts(
+    bench
+) {
+
+    const groupKeys =
+        getBenchGroupKeys(
+            bench
+        );
+
+    groupKeys.forEach(
+        key => {
+
+            const current =
+                groupBenchCounts.get(
+                    key
+                ) || 0;
+
+            groupBenchCounts.set(
+                key,
+                Math.max(
+                    0,
+                    current - 1
+                )
+            );
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   CHOOSE THE FIRST BENCH FOR A ROOM
+========================================================= */
+
+function chooseRoomSeedBench(
+    candidates
+) {
+
+    if (
+        !candidates.length
+    ) {
+
+        return null;
+
+    }
+
+
+    return [...candidates]
+        .sort(
+            (
+                a,
+                b
+            ) => {
+
+                const groupsA =
+                    getBenchGroupKeys(
+                        a
+                    );
+
+                const groupsB =
+                    getBenchGroupKeys(
+                        b
+                    );
+
+
+                const weightA =
+                    groupsA.reduce(
+                        (
+                            total,
+                            key
+                        ) =>
+                            total +
+                            (
+                                groupBenchCounts.get(
+                                    key
+                                ) || 0
+                            ),
+                        0
+                    );
+
+
+                const weightB =
+                    groupsB.reduce(
+                        (
+                            total,
+                            key
+                        ) =>
+                            total +
+                            (
+                                groupBenchCounts.get(
+                                    key
+                                ) || 0
+                            ),
+                        0
+                    );
+
+
+                if (
+                    weightA !==
+                    weightB
+                ) {
+
+                    return (
+                        weightB -
+                        weightA
+                    );
+
+                }
+
+
+                return compareRegisterNumbers(
+                    getBenchFirstStudent(
+                        a
+                    ),
+                    getBenchFirstStudent(
+                        b
+                    )
+                );
+
+            }
+        )[0];
+
+}
+
+
+/* =========================================================
+   CHOOSE NEXT BENCH FOR CURRENT ROOM
+========================================================= */
+
+function chooseBenchForRoom(
+    candidates,
+    slot,
+    roomGroups
+) {
+
+    if (
+        !candidates.length
+    ) {
+
+        return null;
+
+    }
+
+
+    let bestBench =
+        null;
+
+    let bestScore =
+        -Infinity;
+
+
+    candidates.forEach(
+        bench => {
+
+            const groupKeys =
+                getBenchGroupKeys(
+                    bench
+                );
+
+
+            const exactCapacity =
+                bench.students.length ===
+                slot.capacity;
+
+
+            /*
+               How many groups in this bench
+               are already present in this room?
+            */
+
+            const overlap =
+                groupKeys.filter(
+                    key =>
+                        roomGroups.has(
+                            key
+                        )
+                ).length;
+
+
+            /*
+               Penalize introducing a class that
+               has only one remaining bench.
+
+               This is what helps prevent:
+
+               BBA.AVH -> 1
+
+               appearing alone at the end
+               of a room.
+            */
+
+            const newSingletonGroups =
+                groupKeys.filter(
+                    key =>
+                        !roomGroups.has(
+                            key
+                        ) &&
+                        (
+                            groupBenchCounts.get(
+                                key
+                            ) || 0
+                        ) === 1
+                ).length;
+
+
+            /*
+               Prefer groups that still have
+               many benches remaining.
+
+               This keeps their ranges together.
+            */
+
+            const remainingGroupWeight =
+                groupKeys.reduce(
+                    (
+                        total,
+                        key
+                    ) =>
+                        total +
+                        (
+                            groupBenchCounts.get(
+                                key
+                            ) || 0
+                        ),
+                    0
+                );
+
+
+            let score = 0;
+
+
+            /*
+               Strong preference for staying
+               inside the current room's classes.
+            */
+
+            score +=
+                overlap *
+                100000;
+
+
+            /*
+               Keep larger class blocks together.
+            */
+
+            score +=
+                remainingGroupWeight *
+                100;
+
+
+            /*
+               Exact physical capacity is preferred.
+            */
+
+            if (
+                exactCapacity
+            ) {
+
+                score +=
+                    10000;
+
+            }
+
+
+            /*
+               Avoid creating a new one-bench
+               class fragment when possible.
+            */
+
+            score -=
+                newSingletonGroups *
+                50000;
+
+
+            /*
+               Natural register order as tie breaker.
+            */
+
+            const firstStudent =
+                getBenchFirstStudent(
+                    bench
+                );
+
+
+            if (
+                bestBench === null ||
+                score >
+                bestScore ||
+                (
+                    score ===
+                    bestScore &&
+                    compareRegisterNumbers(
+                        firstStudent,
+                        getBenchFirstStudent(
+                            bestBench
+                        )
+                    ) < 0
+                )
+            ) {
+
+                bestBench =
+                    bench;
+
+                bestScore =
+                    score;
+
+            }
+
+        }
+    );
+
+
+    return bestBench;
+
+}
+
+
+/* =========================================================
+   CREATE ROOM SLOT PLANS
+========================================================= */
+
+const roomSlotPlans =
+    rooms
+        .map(
+            room => {
+
+                const roomSlots =
+                    physicalBenchSlots
+                        .filter(
+                            slot =>
+                                String(
+                                    slot.roomId
+                                ) ===
+                                String(
+                                    room._id
+                                )
+                        )
+                        .sort(
+                            (
+                                a,
+                                b
+                            ) => {
+
+                                /*
+                                   Put 2-seat slots first
+                                   internally so that
+                                   2-student benches are
+                                   never accidentally
+                                   consumed by a 3-seat
+                                   slot when a 2-seat
+                                   slot still remains.
+                                */
+
+                                if (
+                                    a.capacity !==
+                                    b.capacity
+                                ) {
+
+                                    return (
+                                        a.capacity -
+                                        b.capacity
+                                    );
+
+                                }
+
+
+                                if (
+                                    a.column !==
+                                    b.column
+                                ) {
+
+                                    return (
+                                        a.column === "A"
+                                            ? -1
+                                            : 1
+                                    );
+
+                                }
+
+
+                                return (
+                                    Number(a.bench) -
+                                    Number(b.bench)
+                                );
+
+                            }
+                        );
+
+
+                return {
+                    room,
+                    slots: roomSlots
+                };
+
+            }
+        )
+        .filter(
+            plan =>
+                plan.slots.length > 0
+        );
+
+
+/* =========================================================
+   FINAL BENCH ASSIGNMENTS
+========================================================= */
+
+const finalBenchAssignments =
+    [];
+
+
+/* =========================================================
+   FILL ROOMS ONE BY ONE
+========================================================= */
+
+for (
+    const roomPlan
+    of roomSlotPlans
+) {
+
+    const room =
+        roomPlan.room;
+
+    const roomSlots =
+        roomPlan.slots;
+
+    const roomGroups =
+        new Set();
+
+
+    /*
+       Find the benches that can physically
+       fit somewhere in this room.
+    */
+
+    for (
+        const slot
+        of roomSlots
+    ) {
+
+        /*
+           First try an exact-capacity bench.
+
+           For a 2-seat physical bench:
+           only a 2-student bench can be used.
+
+           For a 3-seat physical bench:
+           3-student is preferred, then 2-student.
+        */
+
+        let candidates =
+            remainingRoomBenches.filter(
+                bench =>
+                    bench.students.length ===
+                    slot.capacity
+            );
+
+
+        /*
+           If this is a 3-seat physical bench
+           and no 3-student bench remains,
+           a 2-student bench can use it.
+        */
+
+        if (
+            !candidates.length &&
+            slot.capacity === 3
+        ) {
+
+            candidates =
+                remainingRoomBenches.filter(
+                    bench =>
+                        bench.students.length ===
+                        2
+                );
+
+        }
+
+
+        /*
+           If absolutely nothing fits,
+           this indicates a capacity assignment
+           problem.
+        */
+
+        if (
+            !candidates.length
+        ) {
+
+            Swal.close();
+
+            await showAlert(
+                "Room Allocation Error",
+                "SmartSeat could not place the already-valid benches into the available room positions.",
+                "error"
+            );
+
+            seating = [];
+
+            updateStatistics();
+
+            renderSeatingTable();
+
+            return;
+
+        }
+
+
+        let selectedBench;
+
+
+        /*
+           First bench in a room:
+           choose a strong class/group seed.
+        */
+
+        if (
+            roomGroups.size === 0
+        ) {
+
+            selectedBench =
+                chooseRoomSeedBench(
+                    candidates
+                );
+
+        } else {
+
+            /*
+               Remaining benches:
+               choose one that shares groups
+               with the current room.
+            */
+
+            selectedBench =
+                chooseBenchForRoom(
+                    candidates,
+                    slot,
+                    roomGroups
+                );
+
+        }
+
+
+        if (
+            !selectedBench
+        ) {
+
+            Swal.close();
+
+            await showAlert(
+                "Room Allocation Error",
+                "SmartSeat could not create the teacher-style room grouping.",
+                "error"
+            );
+
+            seating = [];
+
+            updateStatistics();
+
+            renderSeatingTable();
+
+            return;
+
+        }
+
+
+        /*
+           Remove selected bench from pool.
+        */
+
+        const selectedIndex =
+            remainingRoomBenches.indexOf(
+                selectedBench
+            );
+
+
+        if (
+            selectedIndex !== -1
+        ) {
+
+            remainingRoomBenches.splice(
+                selectedIndex,
+                1
+            );
+
+        }
+
+
+        /*
+           Add its groups to the current
+           room's class block.
+        */
+
+        getBenchGroupKeys(
+            selectedBench
+        ).forEach(
+            key =>
+                roomGroups.add(
+                    key
+                )
+        );
+
+
+        /*
+           Update remaining group counts.
+        */
+
+        removeBenchFromGroupCounts(
+            selectedBench
+        );
+
+
+        /*
+           Save the physical position.
+        */
+
+        finalBenchAssignments.push({
+
+            slot,
+
+            students:
+                selectedBench.students
+
+        });
+
+    }
+
+}
+
+
+/* =========================================================
+   FINAL CHECK
+========================================================= */
+
+if (
+    remainingRoomBenches.length !== 0
+) {
+
+    Swal.close();
+
+    await showAlert(
+        "Room Allocation Error",
+        `${remainingRoomBenches.length} valid benches could not be placed into rooms.`,
+        "error"
+    );
+
+    seating = [];
+
+    updateStatistics();
+
+    renderSeatingTable();
+
+    return;
+
+}
+
+/* =========================================================
+   CREATE FINAL SEATING
+========================================================= */
+
+const generatedSeating =
+    [];
+
+
+finalBenchAssignments.forEach(
+    assignment => {
+
+        const slot =
+            assignment.slot;
+
+
+        /*
+           Keep the students on the bench
+           naturally ordered by register number.
+        */
+
+        const benchStudents =
+            [...assignment.students]
+                .sort(
+                    compareRegisterNumbers
+                );
+
+
+        const seatsForBench =
+            ["A"];
+
+
+        if (
+            slot.capacity >= 3
+        ) {
+
+            seatsForBench.push(
+                "C"
+            );
+
+        }
+
+
+        if (
+            slot.capacity >= 2
+        ) {
+
+            seatsForBench.push(
+                "B"
+            );
+
+        }
+
+
+        benchStudents.forEach(
+            (
+                student,
+                index
+            ) => {
+
+                const seat =
+                    seatsForBench[
+                        index
+                    ];
+
+
+                if (
+                    !seat
+                ) {
+
+                    return;
+
+                }
+
+
+                generatedSeating.push({
+
+                    registerNumber:
+                        getRegisterNumber(
+                            student
+                        ),
+
+                    name:
+                        student.name ||
+                        "",
+
+                    department:
+                        student.department ||
+                        "",
+
+                    semester:
+                        student.semester ||
+                        "",
+
+                    roomId:
+                        slot.roomId,
+
+                    roomNumber:
+                        slot.roomNumber,
+
+                    bench:
+                        slot.bench,
+
+                    column:
+                        slot.column,
+
+                    seat
+
+                });
+
+            }
+        );
+
+    }
+);
+
+/* =========================================================
+   FINAL VERIFICATION
+========================================================= */
+
+if (
+    generatedSeating.length !==
+    students.length
+) {
+
+    Swal.close();
+
+
+    await showAlert(
+        "Allocation Error",
+        `Only ${generatedSeating.length} of ${students.length} students were allocated.`,
+        "error"
+    );
+
+
+    seating = [];
+
+
+    updateStatistics();
+
+    renderSeatingTable();
+
+
+    return;
+
+}
+
+
+/*
+   Duplicate register check.
+*/
+
+const finalRegisters =
+    generatedSeating.map(
+        item =>
+            item.registerNumber
+    );
+
+
+const finalUniqueRegisters =
+    new Set(
+        finalRegisters
+    );
+
+
+if (
+    finalUniqueRegisters.size !==
+    students.length
+) {
+
+    Swal.close();
+
+
+    await showAlert(
+        "Allocation Error",
+        "Duplicate register numbers were detected.",
+        "error"
+    );
+
+
+    seating = [];
+
+
+    updateStatistics();
+
+    renderSeatingTable();
+
+
+    return;
+
+}
+
+
+/*
+   Final physical seat check.
+*/
+
+const finalPhysicalKeys =
+    generatedSeating.map(
+        item =>
+            `${item.roomId}|${item.column}|${item.bench}|${item.seat}`
+    );
+
+
+const finalUniquePhysicalKeys =
+    new Set(
+        finalPhysicalKeys
+    );
+
+
+if (
+    finalUniquePhysicalKeys.size !==
+    generatedSeating.length
+) {
+
+    Swal.close();
+
+
+    await showAlert(
+        "Allocation Error",
+        "Duplicate physical seats were detected.",
+        "error"
+    );
+
+
+    seating = [];
+
+
+    updateStatistics();
+
+    renderSeatingTable();
+
+
+    return;
+
+}
+
+
+/*
+   FINAL RULE CHECK.
+*/
+
+const finalBenchMap =
+    new Map();
+
+
+generatedSeating.forEach(
+    item => {
+
+        const key =
+            `${item.roomId}|${item.column}|${item.bench}`;
+
+
+        if (
+            !finalBenchMap.has(key)
+        ) {
+
+            finalBenchMap.set(
+                key,
+                []
+            );
+
+        }
+
+
+        finalBenchMap
+            .get(key)
+            .push(item);
+
+    }
+);
+
+
+for (
+    const benchStudents
+    of finalBenchMap.values()
+) {
+
+    for (
+        let i = 0;
+        i < benchStudents.length;
+        i++
+    ) {
+
+        for (
+            let j = i + 1;
+            j < benchStudents.length;
+            j++
+        ) {
+
+            const originalStudentA =
+                students.find(
+                    student =>
+                        getRegisterNumber(student) ===
+                        getRegisterNumber(benchStudents[i])
+                );
+
+            const originalStudentB =
+                students.find(
+                    student =>
+                        getRegisterNumber(student) ===
+                        getRegisterNumber(benchStudents[j])
+                );
+
+            if (
+            !originalStudentA ||
+            !originalStudentB ||
+            !canShareBench(
+                [originalStudentA],
+                originalStudentB
+            )
+        ) {
+
+
+                Swal.close();
+
+
+                await showAlert(
+                    "Allocation Error",
+                    "A final bench-rule conflict was detected. The arrangement was not accepted.",
+                    "error"
+                );
+
+
+                seating = [];
+
+
+                updateStatistics();
+
+                renderSeatingTable();
+
+
+                return;
+
+            }
+
+        }
+
+    }
+
+}
+
+
+/* =========================================================
+   SORT FINAL SEATING
+========================================================= */
+
+generatedSeating.sort(
+    (
+        a,
+        b
+    ) => {
+
+        const roomCompare =
+            String(
+                a.roomNumber
+            ).localeCompare(
+                String(
+                    b.roomNumber
+                ),
+                undefined,
+                {
+                    numeric: true
+                }
+            );
+
+
+        if (
+            roomCompare !== 0
+        ) {
+
+            return roomCompare;
+
+        }
+
+
+        if (
+            a.column !==
+            b.column
+        ) {
+
+            return a.column === "A"
+                ? -1
+                : 1;
+
+        }
+
+
+        if (
+            a.bench !==
+            b.bench
+        ) {
+
+            return (
+                Number(a.bench) -
+                Number(b.bench)
+            );
+
+        }
+
+
+        const seatOrder = {
+
+            A: 1,
+
+            C: 2,
+
+            B: 3
+
+        };
+
+
+        return (
+            (
+                seatOrder[a.seat] ||
+                99
+            ) -
+            (
+                seatOrder[b.seat] ||
+                99
+            )
+        );
+
+    }
+);
+
+
+/*
+   SUCCESS.
+*/
+
+seating =
+    generatedSeating;
+
+
+await wait(500);
 
 
     /* --------------------------------------
@@ -1837,14 +6074,13 @@ async function generateSeating() {
         seating.length;
 
 
-    const physicalCapacity =
-        allSeats.length;
+    const verificationPhysicalCapacity =
+    allSeats.length;
 
 
     const remaining =
-        physicalCapacity -
-        allocated;
-
+    verificationPhysicalCapacity -
+    allocated;
 
     /* --------------------------------------
        VERIFY DUPLICATES
@@ -2029,9 +6265,9 @@ async function generateSeating() {
     );
 
     console.log(
-        "Physical Seats:",
-        physicalCapacity
-    );
+    "Physical Seats:",
+    verificationPhysicalCapacity
+);
 
     console.log(
         "Allocated:",

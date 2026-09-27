@@ -28,7 +28,14 @@ const studentSchema = new mongoose.Schema(
     section: {
         type: String,
         required: true
+    },
+
+    batch: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Batch",
+    default: null
     }
+
 },
 {
     timestamps: true

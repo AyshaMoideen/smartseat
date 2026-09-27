@@ -1,12 +1,31 @@
 const mongoose = require("mongoose");
 
-
 // ==========================================
-// SUBJECT SCHEMA
+// EXAM SUBJECT SCHEMA
 // ==========================================
 
 const examSubjectSchema = new mongoose.Schema(
     {
+        batch: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Batch",
+            required: true
+        },
+
+        semester: {
+            type: Number,
+            required: true,
+            min: 1,
+            max: 6
+        },
+
+        department: {
+            type: String,
+            required: true,
+            trim: true,
+            uppercase: true
+        },
+
         subjectCode: {
             type: String,
             trim: true,
@@ -18,14 +37,38 @@ const examSubjectSchema = new mongoose.Schema(
             type: String,
             required: true,
             trim: true
+        }
+    },
+    {
+        _id: false
+    }
+);
+
+
+// ==========================================
+// PARTICIPATING BATCH / SEMESTER
+// ==========================================
+
+const participatingSemesterSchema = new mongoose.Schema(
+    {
+        batch: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Batch",
+            required: true
         },
 
-        departments: [
-            {
-                type: String,
-                trim: true
-            }
-        ]
+        batchName: {
+            type: String,
+            required: true,
+            trim: true
+        },
+
+        semester: {
+            type: Number,
+            required: true,
+            min: 1,
+            max: 6
+        }
     },
     {
         _id: false
@@ -39,6 +82,7 @@ const examSubjectSchema = new mongoose.Schema(
 
 const examSchema = new mongoose.Schema(
     {
+
         // ----------------------------------
         // Common Examination Details
         // ----------------------------------
@@ -47,13 +91,6 @@ const examSchema = new mongoose.Schema(
             type: String,
             required: true,
             trim: true
-        },
-
-        semester: {
-            type: Number,
-            required: true,
-            min: 1,
-            max: 6
         },
 
         examDate: {
@@ -79,15 +116,34 @@ const examSchema = new mongoose.Schema(
 
 
         // ----------------------------------
-        // Department / Programme Subjects
+        // Participating Batch + Semester
+        // ----------------------------------
+
+        participatingSemesters: {
+            type: [participatingSemesterSchema],
+            required: true,
+            validate: {
+                validator: function (value) {
+                    return Array.isArray(value) && value.length > 0;
+                },
+
+                message:
+                    "At least one batch and semester must participate."
+            }
+        },
+
+
+        // ----------------------------------
+        // Examination Subjects
         // ----------------------------------
 
         subjects: {
             type: [examSubjectSchema],
             required: true,
+
             validate: {
                 validator: function (value) {
-                    return value.length > 0;
+                    return Array.isArray(value) && value.length > 0;
                 },
 
                 message:
@@ -114,6 +170,7 @@ const examSchema = new mongoose.Schema(
             type: Boolean,
             default: true
         }
+
     },
 
     {

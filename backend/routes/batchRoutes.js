@@ -6,7 +6,8 @@ const {
     addBatch,
     getBatches,
     updateBatch,
-    deleteBatch
+    deleteBatch,
+    moveBatchToNextSemester
 } = require("../controllers/batchController");
 
 const protect = require("../middleware/authMiddleware");
@@ -33,6 +34,10 @@ router.post("/", addBatch);
 
 router.get("/", getBatches);
 
+router.put(
+    "/:id/next-semester",
+    moveBatchToNextSemester
+);
 
 /* ==========================================
    UPDATE BATCH
@@ -51,3 +56,4 @@ router.delete("/:id", deleteBatch);
 
 
 module.exports = router;
+

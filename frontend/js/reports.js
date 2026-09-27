@@ -725,7 +725,6 @@ function getDepartmentStrength(
 
 }
 
-
 /* ==========================================
    REGISTER RANGE
 ========================================== */
@@ -734,25 +733,40 @@ function getRegisterRange(
     students
 ) {
 
-    if (!students.length) {
+    if (
+        !Array.isArray(students) ||
+        students.length === 0
+    ) {
 
         return "-";
 
     }
 
 
+    /* --------------------------------------
+       GET UNIQUE REGISTER NUMBERS
+    -------------------------------------- */
+
     const registers =
-        students
-            .map(
-                student =>
-                    String(
-                        student.registerNumber ||
-                        student.regNo ||
-                        ""
+        [
+            ...new Set(
+
+                students
+                    .map(
+                        student =>
+                            String(
+                                student?.registerNumber ||
+                                student?.regNo ||
+                                ""
+                            )
+                                .trim()
+                                .toUpperCase()
                     )
+
+                    .filter(Boolean)
+
             )
-            .filter(Boolean)
-            .sort();
+        ];
 
 
     if (!registers.length) {
@@ -762,19 +776,271 @@ function getRegisterRange(
     }
 
 
-    if (
-        registers.length === 1
+    /* --------------------------------------
+       PARSE REGISTER NUMBER
+
+       Example:
+
+       MD24BTMR001
+
+       prefix = MD24BTMR
+       number = 1
+    -------------------------------------- */
+
+    function parseRegister(
+        register
     ) {
 
-        return registers[0];
+        const match =
+            register.match(
+                /^(.*?)(\d+)$/
+            );
+
+
+        if (!match) {
+
+            return {
+
+                register,
+                prefix: register,
+                number: null
+
+            };
+
+        }
+
+
+        return {
+
+            register,
+
+            prefix: match[1],
+
+            number:
+                Number(
+                    match[2]
+                )
+
+        };
 
     }
 
 
-    return `${registers[0]} - ${registers[registers.length - 1]}`;
+    /* --------------------------------------
+       GROUP BY REGISTER PREFIX
+    -------------------------------------- */
+
+    const prefixGroups =
+        new Map();
+
+
+    registers.forEach(
+        register => {
+
+            const parsed =
+                parseRegister(
+                    register
+                );
+
+
+            if (
+                !prefixGroups.has(
+                    parsed.prefix
+                )
+            ) {
+
+                prefixGroups.set(
+                    parsed.prefix,
+                    []
+                );
+
+            }
+
+
+            prefixGroups
+                .get(
+                    parsed.prefix
+                )
+                .push(
+                    parsed
+                );
+
+        }
+    );
+
+
+    const ranges = [];
+
+
+    /* --------------------------------------
+       BUILD REAL CONSECUTIVE RANGES
+    -------------------------------------- */
+
+    prefixGroups.forEach(
+        items => {
+
+            items.sort(
+                (
+                    a,
+                    b
+                ) => {
+
+                    if (
+                        a.number === null ||
+                        b.number === null
+                    ) {
+
+                        return a.register.localeCompare(
+                            b.register,
+                            undefined,
+                            {
+                                numeric: true
+                            }
+                        );
+
+                    }
+
+
+                    return (
+                        a.number -
+                        b.number
+                    );
+
+                }
+            );
+
+
+            let start =
+                items[0];
+
+            let previous =
+                items[0];
+
+
+            for (
+                let i = 1;
+                i < items.length;
+                i++
+            ) {
+
+                const current =
+                    items[i];
+
+
+                /* --------------------------------
+                   CONSECUTIVE NUMBER
+                -------------------------------- */
+
+                if (
+                    current.number !== null &&
+                    previous.number !== null &&
+                    current.number ===
+                        previous.number + 1
+                ) {
+
+                    previous =
+                        current;
+
+                    continue;
+
+                }
+
+
+                /* --------------------------------
+                   CLOSE PREVIOUS RANGE
+                -------------------------------- */
+
+                if (
+                    start.number !== null &&
+                    previous.number !== null
+                ) {
+
+                    if (
+                        start.number ===
+                        previous.number
+                    ) {
+
+                        ranges.push(
+                            start.register
+                        );
+
+                    }
+
+                    else {
+
+                        ranges.push(
+                            `${start.register} - ${previous.register}`
+                        );
+
+                    }
+
+                }
+
+                else {
+
+                    ranges.push(
+                        start.register
+                    );
+
+                }
+
+
+                start =
+                    current;
+
+                previous =
+                    current;
+
+            }
+
+
+            /* --------------------------------
+               CLOSE FINAL RANGE
+            -------------------------------- */
+
+            if (
+                start.number !== null &&
+                previous.number !== null
+            ) {
+
+                if (
+                    start.number ===
+                    previous.number
+                ) {
+
+                    ranges.push(
+                        start.register
+                    );
+
+                }
+
+                else {
+
+                    ranges.push(
+                        `${start.register} - ${previous.register}`
+                    );
+
+                }
+
+            }
+
+            else {
+
+                ranges.push(
+                    start.register
+                );
+
+            }
+
+        }
+    );
+
+
+    return ranges.join(
+        ", "
+    );
 
 }
-
 
 /* ==========================================
    PDF 1
